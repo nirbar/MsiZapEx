@@ -1,0 +1,103 @@
+UpgradeCode = c301f105-d0a2-4ba9-9de4-498eea078900 Obfsucated = 501F103C2A0D9AB4D94E94E8AE709800
+ProductCode = {B19ED5D0-2262-43F7-AA89-48B43CDEA161} Obfsucated = 0D5DE91B26227F34AA98844BC3ED1A16
+Feature = ProductFeature
+Component1 =  Guid = {8EEF8D7F-0EFF-5DB7-BEA6-BC2E776A4AAE} KeyPath=C:\Program Files (x86)\SetupProject1\Product.wxs Obfsucated = F7D8FEE8FFE07BD5EB6ACBE277A6A4EA
+
+# Onfuscation example:
+
+## {B19ED5D0-2262-43F7-AA89-48B43CDEA161}  --> 0D5DE91B26227F34AA98844BC3ED1A16
+1. Write as B19ED5D0-2262-43F7-AA-89-48-B4-3C-DE-A1-61
+1. Reverse each sectio.
+
+## Method 2: Swaps Nibles
+1. [0] <--> [7]
+1. [1] <--> [6]
+1. [2] <--> [5]
+1. [3] <--> [4]
+1. [8] <--> [11]
+1. [9] <--> [10]
+1. [12] <--> [15]
+1. [13] <--> [14]
+1. [16] <--> [17]
+1. [18] <--> [19]
+1. [20] <--> [21]
+1. [22] <--> [23]
+1. [24] <--> [25]
+1. [26] <--> [27]
+1. [28] <--> [29]
+1. [30] <--> [31]
+
+
+
+Values added: 516
+----------------------------------
+HKLM\SOFTWARE\Classes\Installer\Features\0D5DE91B26227F34AA98844BC3ED1A16\ProductFeature: ""
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\ProductName: "SetupProject1"
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\PackageCode: "2E0A35BBF730C0A43A605B244CAA251B"
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\Language: 0x00000409
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\Version: 0x01000000
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\Assignment: 0x00000001
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\AdvertiseFlags: 0x00000184
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstanceType: 0x00000000
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\AuthorizedLUAApp: 0x00000000
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\DeploymentFlags: 0x00000002
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\Clients:  3A 00 00 00 00 00
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\SourceList\PackageName: "SetupProject1.msi"
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\SourceList\LastUsedSource: "n;1;C:\Users\nir.bar\Desktop\Debug\"
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\SourceList\Media\1: ";"
+HKLM\SOFTWARE\Classes\Installer\Products\0D5DE91B26227F34AA98844BC3ED1A16\SourceList\Net\1: "C:\Users\nir.bar\Desktop\Debug\"
+HKLM\SOFTWARE\Classes\Installer\UpgradeCodes\501F103C2A0D9AB4D94E94E8AE709800\0D5DE91B26227F34AA98844BC3ED1A16: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\Folders\C:\Program Files (x86)\SetupProject1\: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\501F103C2A0D9AB4D94E94E8AE709800\0D5DE91B26227F34AA98844BC3ED1A16: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components\F7D8FEE8FFE07BD5EB6ACBE277A6A4EA\0D5DE91B26227F34AA98844BC3ED1A16: "C:\Program Files (x86)\SetupProject1\Product.wxs"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\Features\ProductFeature: "_{pxUKD4-Fy)m$3XNL$a"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\LocalPackage: "C:\Windows\Installer\28093.msi"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\AuthorizedCDFPrefix: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\Comments: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\Contact: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\DisplayVersion: "1.0.0.0"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\HelpLink: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\HelpTelephone: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\InstallDate: "20170621"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\InstallLocation: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\InstallSource: "C:\Users\nir.bar\Desktop\Debug\"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\ModifyPath: "MsiExec.exe /I{B19ED5D0-2262-43F7-AA89-48B43CDEA161}"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\Publisher: "Panel::Software"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\Readme: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\Size: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\EstimatedSize: 0x00000024
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\UninstallString: "MsiExec.exe /I{B19ED5D0-2262-43F7-AA89-48B43CDEA161}"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\URLInfoAbout: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\URLUpdateInfo: ""
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\VersionMajor: 0x00000001
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\VersionMinor: 0x00000000
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\WindowsInstaller: 0x00000001
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\Version: 0x01000000
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\Language: 0x00000409
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\InstallProperties\DisplayName: "SetupProject1"
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\0D5DE91B26227F34AA98844BC3ED1A16\Patches\AllPatches: ""
+HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore\Volatile\NestingLevel: 0x00000000
+HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore\Volatile\StartNesting:  07 DE 31 75 7C EA D2 01
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\AuthorizedCDFPrefix: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\Comments: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\Contact: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\DisplayVersion: "1.0.0.0"
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\HelpLink: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\HelpTelephone: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\InstallDate: "20170621"
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\InstallLocation: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\InstallSource: "C:\Users\nir.bar\Desktop\Debug\"
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\ModifyPath: "MsiExec.exe /I{B19ED5D0-2262-43F7-AA89-48B43CDEA161}"
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\Publisher: "Panel::Software"
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\Readme: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\Size: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\EstimatedSize: 0x00000024
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\UninstallString: "MsiExec.exe /I{B19ED5D0-2262-43F7-AA89-48B43CDEA161}"
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\URLInfoAbout: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\URLUpdateInfo: ""
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\VersionMajor: 0x00000001
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\VersionMinor: 0x00000000
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\WindowsInstaller: 0x00000001
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\Version: 0x01000000
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\Language: 0x00000409
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B19ED5D0-2262-43F7-AA89-48B43CDEA161}\DisplayName: "SetupProject1"

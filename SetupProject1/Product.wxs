@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="*" Name="SetupProject1" Language="1033" Version="1.0.0.0" Manufacturer="Panel::Software" UpgradeCode="c301f105-d0a2-4ba9-9de4-498eea078900">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+		<MediaTemplate />
+
+		<Feature Id="ProductFeature" Title="SetupProject1" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+		</Feature>
+
+    <Property Id="MSIFASTINSTALL" Value="7"/>
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="INSTALLFOLDER" Name="SetupProject1" />
+			</Directory>
+		</Directory>
+	</Fragment>
+
+	<Fragment>
+		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component>
+        <File Source="$(sys.SOURCEFILEDIR)\Product.wxs"/>
+      </Component>
+		</ComponentGroup>
+	</Fragment>
+</Wix>
