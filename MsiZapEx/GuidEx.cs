@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MsiZapEx
 {
-    public static class GuidEx
+    internal static class GuidEx
     {
         public static string MsiObfuscate(this Guid g)
         {

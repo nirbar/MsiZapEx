@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace MsiZapEx
 {
@@ -9,6 +10,7 @@ namespace MsiZapEx
     {
         public Guid UpgradeCode { get; private set; }
         public List<ProductInfo> RelatedProducts { get; private set; }
+        public RegistryView View { get; private set; }
 
         public UpgradeInfo(Guid upgradeCode)
         {
@@ -27,6 +29,48 @@ namespace MsiZapEx
             GetRelatedProducts(RegistryView.Registry32);
         }
 
+        public static UpgradeInfo FindByProductCode(Guid productCode)
+        {
+            return FindByProductCode(productCode, RegistryView.Registry64)
+                ?? FindByProductCode(productCode, RegistryView.Registry32);
+        }
+
+        private static UpgradeInfo FindByProductCode(Guid productCode, RegistryView view)
+        {
+            string obfuscatedProductCode = GuidEx.MsiObfuscate(productCode);
+            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view))
+            {
+                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\", false))
+                {
+                    if (k == null)
+                    {
+                        throw new FileNotFoundException();
+                    }
+
+                    string[] obfuscatedUpgradeCodes = k.GetSubKeyNames();
+                    foreach (string u in obfuscatedUpgradeCodes)
+                    {
+                        if (Guid.TryParse(u, out Guid id))
+                        {
+                            using (RegistryKey uk = k.OpenSubKey(u, false))
+                            {
+                                string[] obfuscatedProductCodes = uk.GetValueNames();
+                                if (obfuscatedProductCodes.Contains(obfuscatedProductCode))
+                                {
+                                    Guid upgradeCode = GuidEx.MsiObfuscate(u);
+                                    Console.WriteLine($"Detected upgarde code '{upgradeCode}'");
+                                    UpgradeInfo upgrade = new UpgradeInfo(upgradeCode);
+                                    upgrade.View = view;
+                                    return upgrade;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         private void GetRelatedProducts(RegistryView view)
         {
             string obfuscatedGuid = GuidEx.MsiObfuscate(UpgradeCode);
@@ -39,6 +83,7 @@ namespace MsiZapEx
                         return;
                     }
 
+                    View = view;
                     string[] productCodes = k.GetValueNames();
                     foreach (string p in productCodes)
                     {
@@ -55,6 +100,73 @@ namespace MsiZapEx
 
                             Console.WriteLine($"Detected product '{pi.ProductCode}': '{pi.DisplayName}' v{pi.DisplayVersion}, installed in '{pi.InstallLocation}'. It contains {pi.Components.Count} components");
                         }
+                    }
+                }
+            }
+        }
+
+        public void Prune(ProductInfo product)
+        {
+            if (!RelatedProducts.Contains(product))
+            {
+                throw new FileNotFoundException();
+            }
+            product.Prune();
+            RelatedProducts.Remove(product);
+
+            string obfuscatedUpgradeCode = GuidEx.MsiObfuscate(UpgradeCode);
+            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, View))
+            {
+                if (RelatedProducts.Count > 0)
+                {
+                    using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", true))
+                    {
+                        if (k == null)
+                        {
+                            return;
+                        }
+
+                        k.DeleteValue(GuidEx.MsiObfuscate(product.ProductCode));
+                    }
+                }
+                else
+                {
+                    using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\", true))
+                    {
+                        if (k == null)
+                        {
+                            return;
+                        }
+
+                        k.DeleteSubKeyTree(obfuscatedUpgradeCode);
+                    }
+                }
+            }
+
+            using (RegistryKey hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, View))
+            {
+                if (RelatedProducts.Count > 0)
+                {
+                    using (RegistryKey k = hkcr.OpenSubKey($@"HKEY_CLASSES_ROOT\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", true))
+                    {
+                        if (k == null)
+                        {
+                            return;
+                        }
+
+                        k.DeleteValue(GuidEx.MsiObfuscate(product.ProductCode));
+                    }
+                }
+                else
+                {
+                    using (RegistryKey k = hkcr.OpenSubKey(@"HKEY_CLASSES_ROOT\Installer\UpgradeCodes", true))
+                    {
+                        if (k == null)
+                        {
+                            return;
+                        }
+
+                        k.DeleteSubKeyTree(obfuscatedUpgradeCode);
                     }
                 }
             }

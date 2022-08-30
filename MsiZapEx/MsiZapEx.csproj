@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ComponentInfo.cs" />
+    <Compile Include="PatchInfo.cs" />
     <Compile Include="UpgradeInfo.cs" />
     <Compile Include="GuidEx.cs" />
     <Compile Include="OrphanComponent.cs" />
