@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MsiZapEx
 {
@@ -73,46 +74,15 @@ namespace MsiZapEx
             }
         }
 
-        internal void Prune(Guid productCode)
+        internal void Prune(Guid productCode, RegistryModifier modifier)
         {
             string obfuscatedComponentCode = GuidEx.MsiObfuscate(ComponentCode);
             string obfuscatedProductCode = GuidEx.MsiObfuscate(productCode);
-            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, View))
-            {
-                string subkeyName = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components\{obfuscatedComponentCode}";
-                bool deleteSybkey = false;
-                using (RegistryKey k = hklm.OpenSubKey(subkeyName, true))
-                {
-                    if (k != null)
-                    {
 
-                        int prodNum = 0;
-                        foreach (string n in k.GetValueNames())
-                        {
-                            if (string.IsNullOrWhiteSpace(n) || n.Equals("@"))
-                            {
-                                continue;
-                            }
-                            if (n.Equals(obfuscatedProductCode))
-                            {
-                                k.DeleteValue(obfuscatedProductCode, false);
-                                k.DeleteSubKeyTree(obfuscatedProductCode, false);
-                                continue;
-                            }
-                            ++prodNum;
-                        }
-
-                        deleteSybkey = ((prodNum == 0) && (k.SubKeyCount == 0));
-                    }
-                }
-                if (deleteSybkey)
-                {
-                    using (RegistryKey k = hklm.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components", true))
-                    {
-                        hklm.DeleteSubKeyTree(obfuscatedComponentCode, true);
-                    }
-                }
-            }
+            string subkeyName = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components\{obfuscatedComponentCode}";
+            modifier.DeferDeleteValue(RegistryHive.LocalMachine, View, subkeyName, obfuscatedProductCode);
+            modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $"{subkeyName}\\{obfuscatedProductCode}");
+            modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, subkeyName, k => ((k.SubKeyCount == 0) && (k.GetValueNames()?.Any(v => !string.IsNullOrEmpty(v) && !v.Equals("@")) != false)));
         }
     }
 }

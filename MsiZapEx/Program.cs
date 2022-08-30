@@ -11,6 +11,7 @@ namespace MsiZapEx
         // HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\<UpgradeSQUID>\
         // HKEY_CLASSES_ROOT\Installer\UpgradeCodes\<UpgradeSQUID>\
         // HKEY_CLASSES_ROOT\Installer\Products\<ProductSQUID>\
+        // HKEY_CLASSES_ROOT\Installer\Features\<ProductSQUID>\
         // HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\<ProductSQUID>\ 
         // HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\<ProductSQUID>\Features\
         // HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\<ProductSQUID>\InstallProperties\
@@ -23,11 +24,9 @@ namespace MsiZapEx
 
         // Note: SQUID means obfuscated GUID
 
-        public static CmdLineOptions Settings { get; private set; }
-
         static void Main(string[] args)
         {
-            ParserResult<CmdLineOptions> cmdLine = Parser.Default.ParseArguments<CmdLineOptions>(args);
+            ParserResult<Settings> cmdLine = Parser.Default.ParseArguments<Settings>(args);
             if (cmdLine.Errors.Count() > 0)
             {
                 foreach (Error e in cmdLine.Errors)
@@ -37,42 +36,26 @@ namespace MsiZapEx
                 Environment.Exit(1);
             }
 
-            Settings = cmdLine.Value;
-            if (!string.IsNullOrEmpty(Settings.UpgradeCode))
+            Settings.Instance = cmdLine.Value;
+            if (!string.IsNullOrEmpty(Settings.Instance.UpgradeCode))
             {
-                Guid upgradeCode = Settings.Obfuscated ? GuidEx.MsiObfuscate(Settings.UpgradeCode) : new Guid(Settings.UpgradeCode);
+                Guid upgradeCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.UpgradeCode) : new Guid(Settings.Instance.UpgradeCode);
                 Console.WriteLine($"Upgarde code is {upgradeCode}");
 
                 UpgradeInfo upgrade = new UpgradeInfo(upgradeCode);
             }
-            else if (!string.IsNullOrEmpty(Settings.ProductCode))
+            else if (!string.IsNullOrEmpty(Settings.Instance.ProductCode))
             {
-                Guid productCode = Settings.Obfuscated ? GuidEx.MsiObfuscate(Settings.ProductCode) : new Guid(Settings.ProductCode);
+                Guid productCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.ProductCode) : new Guid(Settings.Instance.ProductCode);
                 Console.WriteLine($"Product code is {productCode}");
 
-                ProductInfo product = new ProductInfo(productCode);
+                UpgradeInfo upgrade = UpgradeInfo.FindByProductCode(productCode);
+                ProductInfo product = upgrade.RelatedProducts.First(p => p.ProductCode.Equals(productCode));
+                if (Settings.Instance.ForceClean)
+                {
+                    upgrade.Prune(product);
+                }
             }
-        }
-
-        public class CmdLineOptions
-        {
-            [Option("upgrade-code", Required = false, HelpText = "Detect products by UpgradeCode", Group = "codes")]
-            public string UpgradeCode { get; set; }
-
-            [Option("product-code", Required = false, HelpText = "Detect products by ProductCode", Group = "codes")]
-            public string ProductCode { get; set; }
-
-            [Option("delete", Required = false, HelpText = "Forcibly remove product's Windows Installer entries from the registry")]
-            public bool ForceClean { get; set; }
-
-            [Option("dry-run", Required = false, HelpText = "Do not delete Windows Installer entries. Instead, print anything that would have been deleted")]
-            public bool DryRun { get; set; }
-
-            [Option("verbose", Required = false, HelpText = "Verbose logging")]
-            public bool Verbose { get; set; }
-
-            [Option("obfuscated", Required = false, HelpText = "The upgrade code or product code where supplied in their obfuscated form")]
-            public bool Obfuscated { get; set; }
         }
     }
 }

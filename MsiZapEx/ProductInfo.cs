@@ -56,39 +56,22 @@ namespace MsiZapEx
             }
         }
 
-        internal void Prune()
+        internal void Prune(RegistryModifier modifier)
         {
             foreach (ComponentInfo c in Components)
             {
-                c.Prune(ProductCode);
+                c.Prune(ProductCode, modifier);
             }
             foreach (PatchInfo p in Patches)
             {
-                p.Prune(ProductCode);
+                p.Prune(ProductCode, modifier);
             }
+
             string obfuscatedProductCode = GuidEx.MsiObfuscate(ProductCode);
-            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, View))
-            {
-                using (RegistryKey k = hklm.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products", true))
-                {
-                    k.DeleteSubKeyTree(obfuscatedProductCode);
-                }
-                using (RegistryKey k = hklm.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall", true))
-                {
-                    k.DeleteSubKeyTree(ProductCode.ToString("B"));
-                }
-            }
-            using (RegistryKey hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, View))
-            {
-                using (RegistryKey k = hkcr.OpenSubKey(@"Installer\Products", true))
-                {
-                    k.DeleteSubKeyTree(obfuscatedProductCode);
-                }
-                using (RegistryKey k = hkcr.OpenSubKey(@"Installer\Features", true))
-                {
-                    k.DeleteSubKeyTree(obfuscatedProductCode);
-                }
-            }
+            modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedProductCode}");
+            modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{ProductCode.ToString("B")}");
+            modifier.DeferDeleteKey(RegistryHive.ClassesRoot, View, $@"Installer\Products\{obfuscatedProductCode}");
+            modifier.DeferDeleteKey(RegistryHive.ClassesRoot, View, $@"Installer\Features\{obfuscatedProductCode}");
         }
     }
 }

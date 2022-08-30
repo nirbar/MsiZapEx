@@ -52,13 +52,20 @@ namespace MsiZapEx
             return patches;
         }
 
-        internal void Prune(Guid productCode)
+        internal void Prune(Guid productCode, RegistryModifier modifier)
         {
             string obfuscatedPatchCode = GuidEx.MsiObfuscate(PatchCode);
             string obfuscatedProductCode = GuidEx.MsiObfuscate(productCode);
+
+            modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Patches\{obfuscatedPatchCode}");
+            modifier.DeferDeleteKey(RegistryHive.ClassesRoot, View, $@"Installer\Patches\{obfuscatedPatchCode}");
+
+            string subKey = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedProductCode}\Patches";
+            modifier.DeferDeleteValue(RegistryHive.LocalMachine, View, subKey, obfuscatedPatchCode);
+
             using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, View))
             {
-                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedProductCode}\Patches", true))
+                using (RegistryKey k = hklm.OpenSubKey(subKey, false))
                 {
                     if (k != null)
                     {
@@ -69,31 +76,14 @@ namespace MsiZapEx
                             reduced.Remove(obfuscatedPatchCode);
                             if (reduced.Count > 0)
                             {
-                                k.SetValue("Patches", reduced, RegistryValueKind.MultiString);
+                                modifier.DeferSetValue(RegistryHive.LocalMachine, View, subKey, "Patches", RegistryValueKind.MultiString, reduced);
                             }
                             else
                             {
-                                k.DeleteValue("Patches");
+                                modifier.DeferDeleteValue(RegistryHive.LocalMachine, View, subKey, "Patches");
                             }
                         }
-
-                        k.DeleteValue(obfuscatedPatchCode);
                     }
-                }
-                using (RegistryKey k = hklm.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Patches", true))
-                {
-                    if (k != null)
-                    {
-                        k.DeleteSubKeyTree(obfuscatedPatchCode);
-                    }
-                }
-            }
-
-            using (RegistryKey hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, View))
-            {
-                using (RegistryKey k = hkcr.OpenSubKey(@"Installer\Patches", true))
-                {
-                    k.DeleteSubKeyTree(obfuscatedPatchCode, false);
                 }
             }
         }

@@ -111,63 +111,24 @@ namespace MsiZapEx
             {
                 throw new FileNotFoundException();
             }
-            product.Prune();
-            RelatedProducts.Remove(product);
 
-            string obfuscatedUpgradeCode = GuidEx.MsiObfuscate(UpgradeCode);
-            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, View))
+            using (RegistryModifier modifier = new RegistryModifier())
             {
+                product.Prune(modifier);
+                RelatedProducts.Remove(product);
+
+                string obfuscatedUpgradeCode = GuidEx.MsiObfuscate(UpgradeCode);
+                string obfuscatedProductCode = GuidEx.MsiObfuscate(product.ProductCode);
+
                 if (RelatedProducts.Count > 0)
                 {
-                    using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", true))
-                    {
-                        if (k == null)
-                        {
-                            return;
-                        }
-
-                        k.DeleteValue(GuidEx.MsiObfuscate(product.ProductCode));
-                    }
+                    modifier.DeferDeleteValue(RegistryHive.LocalMachine, View, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
+                    modifier.DeferDeleteValue(RegistryHive.ClassesRoot, View, $@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
                 }
                 else
                 {
-                    using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\", true))
-                    {
-                        if (k == null)
-                        {
-                            return;
-                        }
-
-                        k.DeleteSubKeyTree(obfuscatedUpgradeCode);
-                    }
-                }
-            }
-
-            using (RegistryKey hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, View))
-            {
-                if (RelatedProducts.Count > 0)
-                {
-                    using (RegistryKey k = hkcr.OpenSubKey($@"HKEY_CLASSES_ROOT\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", true))
-                    {
-                        if (k == null)
-                        {
-                            return;
-                        }
-
-                        k.DeleteValue(GuidEx.MsiObfuscate(product.ProductCode));
-                    }
-                }
-                else
-                {
-                    using (RegistryKey k = hkcr.OpenSubKey(@"HKEY_CLASSES_ROOT\Installer\UpgradeCodes", true))
-                    {
-                        if (k == null)
-                        {
-                            return;
-                        }
-
-                        k.DeleteSubKeyTree(obfuscatedUpgradeCode);
-                    }
+                    modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
+                    modifier.DeferDeleteKey(RegistryHive.ClassesRoot, View, $@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
                 }
             }
         }
