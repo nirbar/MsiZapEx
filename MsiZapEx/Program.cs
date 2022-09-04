@@ -36,25 +36,42 @@ namespace MsiZapEx
                 Environment.Exit(1);
             }
 
-            Settings.Instance = cmdLine.Value;
-            if (!string.IsNullOrEmpty(Settings.Instance.UpgradeCode))
+            try
             {
-                Guid upgradeCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.UpgradeCode) : new Guid(Settings.Instance.UpgradeCode);
-                Console.WriteLine($"Upgarde code is {upgradeCode}");
-
-                UpgradeInfo upgrade = new UpgradeInfo(upgradeCode);
-            }
-            else if (!string.IsNullOrEmpty(Settings.Instance.ProductCode))
-            {
-                Guid productCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.ProductCode) : new Guid(Settings.Instance.ProductCode);
-                Console.WriteLine($"Product code is {productCode}");
-
-                UpgradeInfo upgrade = UpgradeInfo.FindByProductCode(productCode);
-                ProductInfo product = upgrade.RelatedProducts.First(p => p.ProductCode.Equals(productCode));
-                if (Settings.Instance.ForceClean)
+                Settings.Instance = cmdLine.Value;
+                if (!string.IsNullOrEmpty(Settings.Instance.UpgradeCode))
                 {
-                    upgrade.Prune(product);
+                    Guid upgradeCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.UpgradeCode) : new Guid(Settings.Instance.UpgradeCode);
+                    Console.WriteLine($"Upgarde code is {upgradeCode}");
+
+                    UpgradeInfo upgrade = new UpgradeInfo(upgradeCode);
+                    if (upgrade != null)
+                    {
+                        if (Settings.Instance.ForceClean && (upgrade.RelatedProducts.Count == 1))
+                        {
+                            upgrade.Prune(upgrade.RelatedProducts[0]);
+                        }
+                    }
                 }
+                else if (!string.IsNullOrEmpty(Settings.Instance.ProductCode))
+                {
+                    Guid productCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.ProductCode) : new Guid(Settings.Instance.ProductCode);
+                    Console.WriteLine($"Product code is {productCode}");
+
+                    UpgradeInfo upgrade = UpgradeInfo.FindByProductCode(productCode);
+                    if (upgrade != null)
+                    {
+                        ProductInfo product = upgrade.RelatedProducts.First(p => p.ProductCode.Equals(productCode));
+                        if (Settings.Instance.ForceClean && (product != null))
+                        {
+                            upgrade.Prune(product);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
             }
         }
     }

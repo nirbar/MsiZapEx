@@ -64,7 +64,7 @@ namespace MsiZapEx
                 {
                     using (RegistryKey k = root.OpenSubKey(setValue.key, false))
                     {
-                        if ((k != null) && k.GetValueNames().Contains(setValue.name) && (setValue.predicate == null) || setValue.predicate.Invoke(k, setValue.name))
+                        if ((k != null) && k.GetValueNames().Contains(setValue.name) && ((setValue.predicate == null) || setValue.predicate.Invoke(k, setValue.name)))
                         {
                             doSet = true;
                         }
@@ -94,7 +94,7 @@ namespace MsiZapEx
                 {
                     using (RegistryKey k = root.OpenSubKey(delValue.key, false))
                     {
-                        if ((k != null) && k.GetValueNames().Contains(delValue.name) && (delValue.predicate == null) || delValue.predicate.Invoke(k, delValue.name))
+                        if ((k != null) && k.GetValueNames().Contains(delValue.name) && ((delValue.predicate == null) || delValue.predicate.Invoke(k, delValue.name)))
                         {
                             doDelete = true;
                         }
@@ -124,7 +124,7 @@ namespace MsiZapEx
                 {
                     using (RegistryKey k = root.OpenSubKey(delKey.key, false))
                     {
-                        if ((k != null) && (delKey.predicate == null) || delKey.predicate.Invoke(k))
+                        if ((k != null) && ((delKey.predicate == null) || delKey.predicate.Invoke(k)))
                         {
                             doDelete = true;
                         }

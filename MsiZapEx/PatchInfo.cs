@@ -7,44 +7,73 @@ namespace MsiZapEx
 {
     public class PatchInfo
     {
+        [Flags]
+        public enum StatusFlags
+        {
+            None = 0,
+            HklmProduct = 1,
+            HklmPatch = 2 * HklmProduct,
+            HkcrPatch = 2 * HklmPatch,
+
+            Good = HkcrPatch | HklmPatch | HklmProduct
+        }
+
         public Guid PatchCode { get; private set; }
-        public RegistryView View { get; private set; }
         public string DisplayName { get; private set; }
         public string LocalPackage { get; private set; }
+        public StatusFlags Status { get; private set; } = StatusFlags.None;
 
-        internal static List<PatchInfo> GetPatches(Guid productCode, RegistryView view)
+        internal static List<PatchInfo> GetPatches(Guid productCode)
         {
             List<PatchInfo> patches = new List<PatchInfo>();
 
             string obfuscatedProductCode = GuidEx.MsiObfuscate(productCode);
 
-            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view))
+            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
-                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedProductCode}\Patches", false))
+                using (RegistryKey hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
                 {
-                    if (k == null)
+                    using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedProductCode}\Patches", false))
                     {
-                        return patches;
-                    }
-
-                    string[] obfuscatedPatchCodes = k.GetSubKeyNames();
-                    foreach (string opc in obfuscatedPatchCodes)
-                    {
-                        if (Guid.TryParse(opc, out Guid guid))
+                        if (k == null)
                         {
-                            PatchInfo pi = new PatchInfo();
-                            pi.View = view;
-                            pi.PatchCode = GuidEx.MsiObfuscate(opc);
+                            return patches;
+                        }
 
-                            using (RegistryKey pk = k.OpenSubKey(opc, false))
+                        string[] obfuscatedPatchCodes = k.GetSubKeyNames();
+                        foreach (string opc in obfuscatedPatchCodes)
+                        {
+                            if (Guid.TryParse(opc, out Guid guid))
                             {
-                                pi.DisplayName = pk.GetValue("DisplayName")?.ToString();
+                                PatchInfo pi = new PatchInfo();
+                                pi.PatchCode = GuidEx.MsiObfuscate(opc);
+
+                                using (RegistryKey pk = k.OpenSubKey(opc, false))
+                                {
+                                    if (pk != null)
+                                    {
+                                        pi.Status |= StatusFlags.HklmProduct;
+                                    }
+                                    pi.DisplayName = pk.GetValue("DisplayName")?.ToString();
+                                }
+                                using (RegistryKey pk = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Patches\{opc}", false))
+                                {
+                                    if (pk != null)
+                                    {
+                                        pi.Status |= StatusFlags.HklmPatch;
+                                    }
+                                    pi.LocalPackage = pk.GetValue("LocalPackage")?.ToString();
+                                }
+                                using (RegistryKey pk = hkcr.OpenSubKey($@"Installer\Patches\{opc}", false))
+                                {
+                                    if (pk != null)
+                                    {
+                                        pi.Status |= StatusFlags.HkcrPatch;
+                                    }
+                                    pi.LocalPackage = pk.GetValue("LocalPackage")?.ToString();
+                                }
+                                patches.Add(pi);
                             }
-                            using (RegistryKey pk = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Patches\{opc}", false))
-                            {
-                                pi.LocalPackage = pk.GetValue("LocalPackage")?.ToString();
-                            }
-                            patches.Add(pi);
                         }
                     }
                 }
@@ -57,13 +86,13 @@ namespace MsiZapEx
             string obfuscatedPatchCode = GuidEx.MsiObfuscate(PatchCode);
             string obfuscatedProductCode = GuidEx.MsiObfuscate(productCode);
 
-            modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Patches\{obfuscatedPatchCode}");
-            modifier.DeferDeleteKey(RegistryHive.ClassesRoot, View, $@"Installer\Patches\{obfuscatedPatchCode}");
+            modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Patches\{obfuscatedPatchCode}");
+            modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Patches\{obfuscatedPatchCode}");
 
             string subKey = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedProductCode}\Patches";
-            modifier.DeferDeleteValue(RegistryHive.LocalMachine, View, subKey, obfuscatedPatchCode);
+            modifier.DeferDeleteValue(RegistryHive.LocalMachine, RegistryView.Registry64, subKey, obfuscatedPatchCode);
 
-            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, View))
+            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
                 using (RegistryKey k = hklm.OpenSubKey(subKey, false))
                 {
@@ -76,11 +105,11 @@ namespace MsiZapEx
                             reduced.Remove(obfuscatedPatchCode);
                             if (reduced.Count > 0)
                             {
-                                modifier.DeferSetValue(RegistryHive.LocalMachine, View, subKey, "Patches", RegistryValueKind.MultiString, reduced);
+                                modifier.DeferSetValue(RegistryHive.LocalMachine, RegistryView.Registry64, subKey, "Patches", RegistryValueKind.MultiString, reduced);
                             }
                             else
                             {
-                                modifier.DeferDeleteValue(RegistryHive.LocalMachine, View, subKey, "Patches");
+                                modifier.DeferDeleteValue(RegistryHive.LocalMachine, RegistryView.Registry64, subKey, "Patches");
                             }
                         }
                     }

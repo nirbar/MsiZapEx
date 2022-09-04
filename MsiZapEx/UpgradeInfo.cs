@@ -8,9 +8,25 @@ namespace MsiZapEx
 {
     internal class UpgradeInfo
     {
+        [Flags]
+        public enum StatusFlags
+        {
+            None = 0,
+
+            HklmUpgarde = 1,
+            HkcrUpgarde = HklmUpgarde * 2,
+
+            HklmHkcrProductsMatch = HkcrUpgarde * 2,
+
+            Products = HklmHkcrProductsMatch * 2,
+            ProductsGood = Products * 2,
+
+            Good = ProductsGood | Products | HklmHkcrProductsMatch | HkcrUpgarde | HklmUpgarde
+        }
+
         public Guid UpgradeCode { get; private set; }
         public List<ProductInfo> RelatedProducts { get; private set; }
-        public RegistryView View { get; private set; }
+        public StatusFlags Status { get; private set; } = StatusFlags.None;
 
         public UpgradeInfo(Guid upgradeCode)
         {
@@ -20,25 +36,19 @@ namespace MsiZapEx
             {
                 throw new FileNotFoundException();
             }
+            Console.WriteLine($"UpgradeCode '{UpgradeCode}', {RelatedProducts.Count} products, status=0x{Status:X}");
         }
 
         private void Enumerate()
         {
             RelatedProducts = new List<ProductInfo>();
-            GetRelatedProducts(RegistryView.Registry64);
-            GetRelatedProducts(RegistryView.Registry32);
+            GetRelatedProducts();
         }
 
         public static UpgradeInfo FindByProductCode(Guid productCode)
         {
-            return FindByProductCode(productCode, RegistryView.Registry64)
-                ?? FindByProductCode(productCode, RegistryView.Registry32);
-        }
-
-        private static UpgradeInfo FindByProductCode(Guid productCode, RegistryView view)
-        {
             string obfuscatedProductCode = GuidEx.MsiObfuscate(productCode);
-            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view))
+            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
                 using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\", false))
                 {
@@ -58,9 +68,7 @@ namespace MsiZapEx
                                 if (obfuscatedProductCodes.Contains(obfuscatedProductCode))
                                 {
                                     Guid upgradeCode = GuidEx.MsiObfuscate(u);
-                                    Console.WriteLine($"Detected upgarde code '{upgradeCode}'");
                                     UpgradeInfo upgrade = new UpgradeInfo(upgradeCode);
-                                    upgrade.View = view;
                                     return upgrade;
                                 }
                             }
@@ -71,38 +79,95 @@ namespace MsiZapEx
             return null;
         }
 
-        private void GetRelatedProducts(RegistryView view)
+        private void GetRelatedProducts()
         {
-            string obfuscatedGuid = GuidEx.MsiObfuscate(UpgradeCode);
-            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view))
+            string obfuscatedUpgradeCode = GuidEx.MsiObfuscate(UpgradeCode);
+            bool hkcrHklmMatch = true;
+            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
-                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedGuid}", false))
+                using (RegistryKey hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
                 {
-                    if (k == null)
+                    using (RegistryKey ck = hkcr.OpenSubKey($@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}", false))
                     {
-                        return;
-                    }
-
-                    View = view;
-                    string[] productCodes = k.GetValueNames();
-                    foreach (string p in productCodes)
-                    {
-                        // Ignore default value
-                        if (string.IsNullOrWhiteSpace(p) || p.Equals("@"))
+                        using (RegistryKey mk = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", false))
                         {
-                            continue;
-                        }
+                            if (ck != null)
+                            {
+                                Status |= StatusFlags.HkcrUpgarde;
 
-                        if (Guid.TryParse(p, out Guid id))
-                        {
-                            ProductInfo pi = new ProductInfo(p, view);
-                            RelatedProducts.Add(pi);
+                                string[] obfuscatedProductCodes = ck.GetValueNames();
+                                foreach (string p in obfuscatedProductCodes)
+                                {
+                                    // Ignore default value
+                                    if (string.IsNullOrWhiteSpace(p) || p.Equals("@"))
+                                    {
+                                        continue;
+                                    }
 
-                            Console.WriteLine($"Detected product '{pi.ProductCode}': '{pi.DisplayName}' v{pi.DisplayVersion}, installed in '{pi.InstallLocation}'. It contains {pi.Components.Count} components");
+                                    if (Guid.TryParse(p, out Guid id))
+                                    {
+                                        if ((mk == null) || !mk.GetValueNames().Contains(p))
+                                        {
+                                            hkcrHklmMatch = false;
+                                        }
+
+                                        ProductInfo pi = new ProductInfo(p);
+                                        RelatedProducts.Add(pi);
+                                    }
+                                }
+                            }
+
+                            if (mk != null)
+                            {
+                                Status |= StatusFlags.HklmUpgarde;
+
+                                string[] obfuscatedProductCodes = mk.GetValueNames();
+                                foreach (string p in obfuscatedProductCodes)
+                                {
+                                    // Ignore default value
+                                    if (string.IsNullOrWhiteSpace(p) || p.Equals("@"))
+                                    {
+                                        continue;
+                                    }
+
+                                    if (Guid.TryParse(p, out Guid id))
+                                    {
+                                        if (!RelatedProducts.Any(p1 => p.Equals(GuidEx.MsiObfuscate(p1.ProductCode))))
+                                        {
+                                            hkcrHklmMatch = false;
+
+                                            ProductInfo pi = new ProductInfo(p);
+                                            RelatedProducts.Add(pi);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
+            foreach (ProductInfo pi in RelatedProducts)
+            {
+                Console.WriteLine($"Detected product '{pi.ProductCode}': '{pi.DisplayName}' v{pi.DisplayVersion}, installed in '{pi.InstallLocation}'. It contains {pi.Components.Count} components. Status=0x{pi.Status:X}");
+            }
+            if (RelatedProducts.Count > 0)
+            {
+                Status |= StatusFlags.Products;
+                if (RelatedProducts.TrueForAll(p => p.Status == ProductInfo.StatusFlags.Good))
+                {
+                    Status |= StatusFlags.ProductsGood;
+                }
+            }
+            if (hkcrHklmMatch)
+            {
+                Status |= StatusFlags.HklmHkcrProductsMatch;
+            }
+        }
+
+        public void Prune(Guid productCode)
+        {
+            ProductInfo product = RelatedProducts.First(p => p.ProductCode.Equals(productCode));
+            Prune(product);
         }
 
         public void Prune(ProductInfo product)
@@ -115,20 +180,19 @@ namespace MsiZapEx
             using (RegistryModifier modifier = new RegistryModifier())
             {
                 product.Prune(modifier);
-                RelatedProducts.Remove(product);
 
                 string obfuscatedUpgradeCode = GuidEx.MsiObfuscate(UpgradeCode);
                 string obfuscatedProductCode = GuidEx.MsiObfuscate(product.ProductCode);
 
-                if (RelatedProducts.Count > 0)
+                if (RelatedProducts.Count > 1)
                 {
-                    modifier.DeferDeleteValue(RegistryHive.LocalMachine, View, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
-                    modifier.DeferDeleteValue(RegistryHive.ClassesRoot, View, $@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
+                    modifier.DeferDeleteValue(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
+                    modifier.DeferDeleteValue(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
                 }
                 else
                 {
-                    modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
-                    modifier.DeferDeleteKey(RegistryHive.ClassesRoot, View, $@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
+                    modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
+                    modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
                 }
             }
         }

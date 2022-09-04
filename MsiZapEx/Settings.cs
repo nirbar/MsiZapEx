@@ -18,9 +18,6 @@ namespace MsiZapEx
         [Option("dry-run", Required = false, HelpText = "Do not delete Windows Installer entries. Instead, print anything that would have been deleted")]
         public bool DryRun { get; set; }
 
-        [Option("verbose", Required = false, HelpText = "Verbose logging")]
-        public bool Verbose { get; set; }
-
         [Option("obfuscated", Required = false, HelpText = "The upgrade code or product code were supplied in their obfuscated form")]
         public bool Obfuscated { get; set; }
     }
