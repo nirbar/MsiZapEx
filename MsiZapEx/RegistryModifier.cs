@@ -72,7 +72,11 @@ namespace MsiZapEx
 
                     if (doSet)
                     {
-                        Console.WriteLine($"Setting value: '{setValue.hive}\\{setValue.key}@{setValue.name}'");
+                        if (Settings.Instance?.Verbose == true)
+                        {
+                            Console.WriteLine($"Setting value: '{setValue.hive}\\{setValue.key}@{setValue.name}'");
+                        }
+
                         if (Settings.Instance?.DryRun != true)
                         {
                             using (RegistryKey k = root.OpenSubKey(setValue.key, true))
@@ -102,7 +106,11 @@ namespace MsiZapEx
 
                     if (doDelete)
                     {
-                        Console.WriteLine($"Deleting value: '{delValue.hive}\\{delValue.key}@{delValue.name}'");
+                        if (Settings.Instance?.Verbose == true)
+                        {
+                            Console.WriteLine($"Deleting value: '{delValue.hive}\\{delValue.key}@{delValue.name}'");
+                        }
+
                         if (Settings.Instance?.DryRun != true)
                         {
                             using (RegistryKey k = root.OpenSubKey(delValue.key, true))
@@ -132,7 +140,11 @@ namespace MsiZapEx
 
                     if (doDelete)
                     {
-                        Console.WriteLine($"Deleting key: '{delKey.hive}\\{delKey.key}'");
+                        if (Settings.Instance?.Verbose == true)
+                        {
+                            Console.WriteLine($"Deleting key: '{delKey.hive}\\{delKey.key}'");
+                        }
+
                         if (Settings.Instance?.DryRun != true)
                         {
                             root.DeleteSubKeyTree(delKey.key);

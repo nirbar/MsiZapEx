@@ -3,11 +3,11 @@ ProductCode = {B19ED5D0-2262-43F7-AA89-48B43CDEA161} Obfsucated = 0D5DE91B26227F
 Feature = ProductFeature
 Component1 =  Guid = {8EEF8D7F-0EFF-5DB7-BEA6-BC2E776A4AAE} KeyPath=C:\Program Files (x86)\SetupProject1\Product.wxs Obfsucated = F7D8FEE8FFE07BD5EB6ACBE277A6A4EA
 
-# Onfuscation example:
+# Obfuscation example:
 
 ## {B19ED5D0-2262-43F7-AA89-48B43CDEA161}  --> 0D5DE91B26227F34AA98844BC3ED1A16
 1. Write as B19ED5D0-2262-43F7-AA-89-48-B4-3C-DE-A1-61
-1. Reverse each sectio.
+1. Reverse each section
 
 ## Method 2: Swaps Nibles
 1. [0] <--> [7]
