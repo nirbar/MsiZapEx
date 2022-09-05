@@ -34,8 +34,7 @@ namespace MsiZapEx
                 {
                     if (k == null)
                     {
-                        Console.WriteLine(@"Registry key doesn't exist: SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components");
-                        return components;
+                        throw new FileNotFoundException();
                     }
 
                     string[] componentCodes = k.GetSubKeyNames();
@@ -51,10 +50,6 @@ namespace MsiZapEx
                         if (ci.productToKeyPath.ContainsKey(productCode))
                         {
                             components.Add(ci);
-                            if (!ci.Status.HasFlag(StatusFlags.KeyPath))
-                            {
-                                Console.WriteLine($"KeyPath '{ci.KeyPath}' not found for component '{ci.ComponentCode}'");
-                            }
                         }
                     }
                 }
@@ -92,6 +87,14 @@ namespace MsiZapEx
                         }
                     }
                 }
+            }
+        }
+
+        internal void PrintState()
+        {
+            if (!Status.HasFlag(StatusFlags.KeyPath))
+            {
+                Console.WriteLine($"\tKeyPath '{KeyPath}' not found for component '{ComponentCode}'");
             }
         }
 

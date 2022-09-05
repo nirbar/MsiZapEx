@@ -38,9 +38,63 @@ namespace MsiZapEx
         {
             string obfuscatedGuid = GuidEx.MsiObfuscate(productCode);
             Read(obfuscatedGuid);
+        }
+
+        public void PrintState()
+        {
             if (Status == StatusFlags.None)
             {
-                throw new FileNotFoundException();
+                Console.WriteLine($"Product not found");
+                return;
+            }
+
+            Console.WriteLine($"Product '{ProductCode}': '{DisplayName}' v{DisplayVersion} Contains {Components.Count} components");
+
+            if (!Status.HasFlag(StatusFlags.HkcrProduct))
+            {
+                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\Products");
+            }
+            if (!Status.HasFlag(StatusFlags.HkcrFeatures))
+            {
+                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\Features");
+            }
+            if (!Status.HasFlag(StatusFlags.ARP))
+            {
+                Console.WriteLine($@"{'\t'}Missing Uninstall key under 'Software\Microsoft\Windows\CurrentVersion\Uninstall");
+            }
+            if (!Status.HasFlag(StatusFlags.HklmFeatures))
+            {
+                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\<ProductCode SUID>\Features");
+            }
+            if (!Status.HasFlag(StatusFlags.HklmProduct))
+            {
+                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\<ProductCode SUID>\InstallProperties");
+            }
+
+            if (!Status.HasFlag(StatusFlags.Components))
+            {
+                Console.WriteLine($"\tProduct has no components");
+            }
+            else if (!Status.HasFlag(StatusFlags.ComponentsGood))
+            {
+                foreach (ComponentInfo ci in Components)
+                {
+                    if (!ci.Status.Equals(ComponentInfo.StatusFlags.Good))
+                    {
+                        ci.PrintState();
+                    }
+                }
+            }
+
+            if (!Status.HasFlag(StatusFlags.PatchesGood))
+            {
+                foreach (PatchInfo pi in Patches)
+                {
+                    if (!pi.Status.Equals(PatchInfo.StatusFlags.Good))
+                    {
+                        pi.PrintState();
+                    }
+                }
             }
         }
 
@@ -119,14 +173,14 @@ namespace MsiZapEx
                 {
                     if (k != null)
                     {
-                        Status |= StatusFlags.HkcrFeatures;
+                        Status |= StatusFlags.HkcrProduct;
                     }
                 }
                 using (RegistryKey k = hkcr.OpenSubKey($@"Installer\Features\{obfuscatedGuid}", false))
                 {
                     if (k != null)
                     {
-                        Status |= StatusFlags.HkcrProduct;
+                        Status |= StatusFlags.HkcrFeatures;
                     }
                 }
             }

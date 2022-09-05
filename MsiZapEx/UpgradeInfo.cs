@@ -32,11 +32,38 @@ namespace MsiZapEx
         {
             UpgradeCode = upgradeCode;
             Enumerate();
+        }
+
+        public void PrintState()
+        {
+            if (Status == StatusFlags.None)
+            {
+                Console.WriteLine($"UpgradeCode not found");
+                return;
+            }
+
+            Console.WriteLine($"UpgradeCode '{UpgradeCode}', {RelatedProducts.Count} products");
+            if (!Status.HasFlag(StatusFlags.HkcrUpgarde))
+            {
+                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\UpgradeCodes");
+            }
+            if (!Status.HasFlag(StatusFlags.HklmHkcrProductsMatch))
+            {
+                Console.WriteLine($@"{'\t'}HKCR key 'Installer\UpgradeCodes and HKLM key 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes' have mismatching products");
+            }
+            if (!Status.HasFlag(StatusFlags.HklmUpgarde))
+            {
+                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes");
+            }
+
             if (RelatedProducts.Count == 0)
             {
-                throw new FileNotFoundException();
+                Console.WriteLine($"\tNo related products detected");
             }
-            Console.WriteLine($"UpgradeCode '{UpgradeCode}', {RelatedProducts.Count} products, status=0x{Status:X}");
+            foreach (ProductInfo product in RelatedProducts)
+            {
+                product.PrintState();
+            }
         }
 
         private void Enumerate()
@@ -145,10 +172,6 @@ namespace MsiZapEx
                         }
                     }
                 }
-            }
-            foreach (ProductInfo pi in RelatedProducts)
-            {
-                Console.WriteLine($"Detected product '{pi.ProductCode}': '{pi.DisplayName}' v{pi.DisplayVersion}, installed in '{pi.InstallLocation}'. It contains {pi.Components.Count} components. Status=0x{pi.Status:X}");
             }
             if (RelatedProducts.Count > 0)
             {

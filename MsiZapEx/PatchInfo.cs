@@ -53,24 +53,24 @@ namespace MsiZapEx
                                     if (pk != null)
                                     {
                                         pi.Status |= StatusFlags.HklmProduct;
+                                        pi.DisplayName = pk.GetValue("DisplayName")?.ToString();
                                     }
-                                    pi.DisplayName = pk.GetValue("DisplayName")?.ToString();
                                 }
                                 using (RegistryKey pk = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Patches\{opc}", false))
                                 {
                                     if (pk != null)
                                     {
                                         pi.Status |= StatusFlags.HklmPatch;
+                                        pi.LocalPackage = pk.GetValue("LocalPackage")?.ToString();
                                     }
-                                    pi.LocalPackage = pk.GetValue("LocalPackage")?.ToString();
                                 }
                                 using (RegistryKey pk = hkcr.OpenSubKey($@"Installer\Patches\{opc}", false))
                                 {
                                     if (pk != null)
                                     {
                                         pi.Status |= StatusFlags.HkcrPatch;
+                                        pi.LocalPackage = pk.GetValue("LocalPackage")?.ToString();
                                     }
-                                    pi.LocalPackage = pk.GetValue("LocalPackage")?.ToString();
                                 }
                                 patches.Add(pi);
                             }
@@ -79,6 +79,24 @@ namespace MsiZapEx
                 }
             }
             return patches;
+        }
+
+        internal void PrintState()
+        {
+            Console.WriteLine($"Patch '{PatchCode}'");
+
+            if (!Status.HasFlag(StatusFlags.HkcrPatch))
+            {
+                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\Patches");
+            }
+            if (!Status.HasFlag(StatusFlags.HklmPatch))
+            {
+                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Patches");
+            }
+            if (!Status.HasFlag(StatusFlags.HklmProduct))
+            {
+                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\<ProductCode SUID>\Patches");
+            }
         }
 
         internal void Prune(Guid productCode, RegistryModifier modifier)

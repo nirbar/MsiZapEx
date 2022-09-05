@@ -42,30 +42,39 @@ namespace MsiZapEx
                 if (!string.IsNullOrEmpty(Settings.Instance.UpgradeCode))
                 {
                     Guid upgradeCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.UpgradeCode) : new Guid(Settings.Instance.UpgradeCode);
-                    Console.WriteLine($"Upgarde code is {upgradeCode}");
 
                     UpgradeInfo upgrade = new UpgradeInfo(upgradeCode);
                     if (upgrade != null)
                     {
+                        upgrade.PrintState();
                         if (Settings.Instance.ForceClean && (upgrade.RelatedProducts.Count == 1))
                         {
                             upgrade.Prune(upgrade.RelatedProducts[0]);
                         }
                     }
+                    else
+                    {
+                        Console.WriteLine($"No UpgradeCode '{upgradeCode}' was not found");
+                    }
                 }
                 else if (!string.IsNullOrEmpty(Settings.Instance.ProductCode))
                 {
                     Guid productCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.ProductCode) : new Guid(Settings.Instance.ProductCode);
-                    Console.WriteLine($"Product code is {productCode}");
 
                     UpgradeInfo upgrade = UpgradeInfo.FindByProductCode(productCode);
                     if (upgrade != null)
                     {
                         ProductInfo product = upgrade.RelatedProducts.First(p => p.ProductCode.Equals(productCode));
+                        product.PrintState();
                         if (Settings.Instance.ForceClean && (product != null))
                         {
                             upgrade.Prune(product);
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Product '{productCode}' is not related to any UpgradeCode");
+                        ProductInfo product = new ProductInfo(productCode);
                     }
                 }
             }
