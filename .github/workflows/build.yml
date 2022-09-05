@@ -19,7 +19,16 @@ jobs:
           files: build\bin\Release\MsiZapEx\
           dest: MsiZapEx.zip
 
-      - uses: actions/upload-artifact@v2
+      - name: Publish artifact
+        uses: actions/upload-artifact@v2
         with:
           name: MsiZapEx.zip
           path: MsiZapEx.zip
+
+      - name: GH (Pre-)Release
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          files: MsiZapEx.zip
+          generate_release_notes: true
+          tag_name: Build_${{ github.run_number }}_${{ github.ref_type }}_${{ github.ref_name }}
