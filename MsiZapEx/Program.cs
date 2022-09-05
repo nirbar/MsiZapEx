@@ -54,7 +54,7 @@ namespace MsiZapEx
                     }
                     else
                     {
-                        Console.WriteLine($"No UpgradeCode '{upgradeCode}' was not found");
+                        Console.WriteLine($"No UpgradeCode '{upgradeCode}' was found");
                     }
                 }
                 else if (!string.IsNullOrEmpty(Settings.Instance.ProductCode))
@@ -75,6 +75,21 @@ namespace MsiZapEx
                     {
                         Console.WriteLine($"Product '{productCode}' is not related to any UpgradeCode");
                         ProductInfo product = new ProductInfo(productCode);
+                        if (product != null)
+                        {
+                            product.PrintState();
+                            if (Settings.Instance.ForceClean)
+                            {
+                                using (RegistryModifier modifier = new RegistryModifier())
+                                {
+                                    product.Prune(modifier);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"No ProductCode '{productCode}' was found");
+                        }
                     }
                 }
             }
