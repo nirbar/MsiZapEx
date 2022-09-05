@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace MsiZapEx
 {
-    internal class UpgradeInfo
+    public class UpgradeInfo
     {
         [Flags]
         public enum StatusFlags
