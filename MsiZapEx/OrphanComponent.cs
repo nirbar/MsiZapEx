@@ -8,7 +8,7 @@ using System.Linq;
 namespace MsiZapEx
 {
     [Serializable]
-    public class OrphanComponent
+    internal class OrphanComponent
     {
         public OrphanComponent()
         {

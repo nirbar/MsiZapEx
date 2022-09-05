@@ -20,5 +20,8 @@ namespace MsiZapEx
 
         [Option("obfuscated", Required = false, HelpText = "The upgrade code or product code were supplied in their obfuscated form")]
         public bool Obfuscated { get; set; }
+
+        [Option("verbose", Required = false, HelpText = "Verbose logging")]
+        public bool Verbose { get; set; }
     }
 }

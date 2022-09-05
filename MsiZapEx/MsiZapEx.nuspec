@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/01/nuspec.xsd">
+	<metadata minClientVersion="2.7">
+		<id>MsiZapEx</id>
+		<version>0.0.0</version>
+		<title>Utility to detect and prune Windows Installer registry entries</title>
+		<authors>Nir Bar</authors>
+		<owners>Nir Bar</owners>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<license type="file">LICENSE</license>
+		<projectUrl>https://github.com/nirbar/MsiZapEx.git</projectUrl>
+		<repository type="git" url="https://github.com/nirbar/MsiZapEx.git"/>
+		<description>
+			Utility to detect and prune Windows Installer registry entries:
+			Products related to a given UpgradeCode
+			Product by ProductCode
+			Patches
+			Components
+
+			For each of the above, a status can be extracted
+		</description>
+		<tags>MSI Installer MsiZap MsiZapEx</tags>
+
+		<dependencies>
+			<dependency id="CommandLineParser" version="2.9.1" />
+		</dependencies>
+	</metadata>
+
+	<files>
+		<file src="..\build\bin\Release\MsiZapEx\MsiZapEx.exe" target="lib\net452"/>
+		<file src="..\LICENSE" target="LICENSE" />
+	</files>
+</package>

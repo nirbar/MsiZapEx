@@ -8,27 +8,44 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: microsoft/setup-msbuild@v1.0.2
+
       - run: nuget restore
 
       - name: Build solution
         run: msbuild MsiZapEx.sln -m -p:Configuration=Release
 
-      - name: Easy Zip Files
-        uses: vimtor/action-zip@v1
+      - name: Extract tag or branch name
+        uses: actions-ecosystem/action-regex-match@v2.0.2
+        id: tagName
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: build\bin\Release\MsiZapEx\
-          dest: MsiZapEx.zip
+          text: ${{ github.ref }}
+          regex: '^refs\/tags\/v(.*)$'
 
-      - name: Publish artifact
+      - name: Publish nuget packages to github repository
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          nuget.exe pack "MsiZapEx\MsiZapEx.nuspec" -Version "${{ steps.tagName.outputs.group1 }}"
+          dotnet nuget add source --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          dotnet nuget push MsiZapEx.${{ steps.tagName.outputs.group1 }}.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source github
+
+      - name: Publish artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: MsiZapEx.zip
-          path: MsiZapEx.zip
+          name: MsiZapEx
+          path: |
+            build\bin\Release\MsiZapEx\*.exe
+            build\bin\Release\MsiZapEx\*.dll
+            ./*.nupkg
 
-      - name: GH (Pre-)Release
+      - name: Publish release
         uses: softprops/action-gh-release@v0.1.14
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          files: MsiZapEx.zip
+          prerelease: false
           generate_release_notes: true
           tag_name: Build_${{ github.run_number }}_${{ github.ref_type }}_${{ github.ref_name }}
+          files: |
+            MsiZapEx.${{ steps.tagName.outputs.group1 }}.nupkg
+            build\bin\Release\MsiZapEx\MsiZapEx.exe
+            build\bin\Release\MsiZapEx\CommandLine.dll
