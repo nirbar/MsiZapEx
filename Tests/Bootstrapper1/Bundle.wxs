@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension">
+	<Bundle Name="Bootstrapper1" Version="1.0.0.0" Manufacturer="nir" UpgradeCode="ffe885b1-30d1-4d6c-bd69-976e8bc5f291" dep:ProviderKey="test-nir">
+		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense"/>
+
+    <Chain>
+      <ExePackage SourceFile="D:\Projects\Redist\VC 2019\vc_redist.x64.exe" Protocol="burn"
+                  InstallCommand="/install /norestart /silent"
+                  />
+                  
+      <MsiPackage SourceFile="$(var.SetupProject1.TargetPath)"/>
+      <MsiPackage SourceFile="$(var.SetupProject1-x86.TargetPath)"/>
+		</Chain>
+	</Bundle>
+</Wix>

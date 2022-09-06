@@ -183,6 +183,8 @@ namespace MsiZapEx
                         Status |= StatusFlags.HkcrFeatures;
                     }
                 }
+
+                //TODO Parse and print HKCR\Installer\Dependencies\*\Dependents\{ProductCode.ToString("B")}
             }
         }
 
@@ -202,6 +204,11 @@ namespace MsiZapEx
             modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{ProductCode.ToString("B")}");
             modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Products\{obfuscatedProductCode}");
             modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Features\{obfuscatedProductCode}");
+
+            // Bundle dependencies
+            modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{ProductCode.ToString("B")}");
+
+            //TODO Prune HKCR\Installer\Dependencies\*\Dependents\{ProductCode.ToString("B")}
         }
     }
 }

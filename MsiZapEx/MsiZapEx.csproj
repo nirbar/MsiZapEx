@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BundleInfo.cs" />
     <Compile Include="ComponentInfo.cs" />
     <Compile Include="PatchInfo.cs" />
     <Compile Include="RegistryModifier.cs" />

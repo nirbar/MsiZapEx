@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MsiZapEx
@@ -39,6 +40,22 @@ namespace MsiZapEx
             try
             {
                 Settings.Instance = cmdLine.Value;
+                if (!string.IsNullOrEmpty(Settings.Instance.BundleUpgradeCode))
+                {
+                    List<BundleInfo> bundles = BundleInfo.FindByUpgradeCode(new Guid(Settings.Instance.BundleUpgradeCode));
+                    if (bundles.Count == 0)
+                    {
+                        Console.WriteLine($"No BundleUpgradeCode '{Settings.Instance.BundleUpgradeCode}' was found");
+                    }
+                    foreach (BundleInfo bi in bundles)
+                    {
+                        bi.PrintState();
+                    }
+                    if (Settings.Instance.ForceClean && (bundles.Count == 1))
+                    {
+                        bundles[0].Prune();
+                    }
+                }
                 if (!string.IsNullOrEmpty(Settings.Instance.UpgradeCode))
                 {
                     Guid upgradeCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.UpgradeCode) : new Guid(Settings.Instance.UpgradeCode);

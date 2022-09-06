@@ -6,6 +6,9 @@ namespace MsiZapEx
     {
         internal static Settings Instance { get; set; }
 
+        [Option("bundle-upgrade-code", Required = false, HelpText = "Detect bundles by UpgradeCode", Group = "codes")]
+        public string BundleUpgradeCode { get; set; }
+
         [Option("upgrade-code", Required = false, HelpText = "Detect products by UpgradeCode", Group = "codes")]
         public string UpgradeCode { get; set; }
 
