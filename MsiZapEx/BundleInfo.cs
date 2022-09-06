@@ -94,7 +94,7 @@ namespace MsiZapEx
             return bundles;
         }
 
-        internal void Prune()
+        public void Prune()
         {
             using (RegistryModifier modifier = new RegistryModifier())
             {
