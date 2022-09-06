@@ -4,10 +4,6 @@
 		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense"/>
 
     <Chain>
-      <ExePackage SourceFile="D:\Projects\Redist\VC 2019\vc_redist.x64.exe" Protocol="burn"
-                  InstallCommand="/install /norestart /silent"
-                  />
-                  
       <MsiPackage SourceFile="$(var.SetupProject1.TargetPath)"/>
       <MsiPackage SourceFile="$(var.SetupProject1-x86.TargetPath)"/>
 		</Chain>
