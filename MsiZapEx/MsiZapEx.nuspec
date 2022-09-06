@@ -27,7 +27,7 @@
 	</metadata>
 
 	<files>
-		<file src="..\build\bin\Release\MsiZapEx\MsiZapEx.exe" target="lib\net452"/>
+		<file src="..\build\bin\Release\MsiZapEx\MsiZapEx.exe" target="lib\net40"/>
 		<file src="..\LICENSE" target="LICENSE" />
 	</files>
 </package>
