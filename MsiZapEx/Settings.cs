@@ -9,6 +9,9 @@ namespace MsiZapEx
         [Option("bundle-upgrade-code", Required = false, HelpText = "Detect bundles by UpgradeCode", Group = "codes")]
         public string BundleUpgradeCode { get; set; }
 
+        [Option("bundle-product-code", Required = false, HelpText = "Detect bundles by ProductCode", Group = "codes")]
+        public string BundleProductCode { get; set; }
+
         [Option("upgrade-code", Required = false, HelpText = "Detect products by UpgradeCode", Group = "codes")]
         public string UpgradeCode { get; set; }
 

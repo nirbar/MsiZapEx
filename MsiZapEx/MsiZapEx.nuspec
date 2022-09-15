@@ -11,15 +11,18 @@
 		<projectUrl>https://github.com/nirbar/MsiZapEx.git</projectUrl>
 		<repository type="git" url="https://github.com/nirbar/MsiZapEx.git"/>
 		<description>
-			Utility to detect and prune Windows Installer registry entries:
+			Utility to detect and prune WiX bundle and Windows Installer registry entries:
 			Products related to a given UpgradeCode
 			Product by ProductCode
 			Patches
 			Components
+			WiX Bundles by UpgradeCode
+			WiX Bundles by BundleId (AKA ProductCode)
 
 			For each of the above, a status can be extracted
 		</description>
-		<tags>MSI Installer MsiZap MsiZapEx</tags>
+		<readme>README.md</readme>
+		<tags>MSI Installer MsiZap MsiZapEx WiX bundles bootstrapper</tags>
 
 		<dependencies>
 			<dependency id="CommandLineParser" version="2.9.1" />
@@ -29,5 +32,6 @@
 	<files>
 		<file src="..\build\bin\Release\MsiZapEx\MsiZapEx.exe" target="lib\net40"/>
 		<file src="..\LICENSE" target="LICENSE" />
+		<file src="..\README.md" target="README.md" />
 	</files>
 </package>

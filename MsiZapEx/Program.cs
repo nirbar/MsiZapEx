@@ -56,6 +56,21 @@ namespace MsiZapEx
                         bundles[0].Prune();
                     }
                 }
+                if (!string.IsNullOrEmpty(Settings.Instance.BundleProductCode))
+                {
+                    if (!Guid.TryParse(Settings.Instance.BundleProductCode, out Guid productCode))
+                    {
+                        Console.WriteLine($"BundleProductCode '{Settings.Instance.BundleUpgradeCode}' is not a UUID");
+                        Environment.Exit(1);
+                    }
+
+                    BundleInfo bundle = new BundleInfo(productCode);
+                    bundle.PrintState();
+                    if (Settings.Instance.ForceClean)
+                    {
+                        bundle.Prune();
+                    }
+                }
                 if (!string.IsNullOrEmpty(Settings.Instance.UpgradeCode))
                 {
                     Guid upgradeCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.UpgradeCode) : new Guid(Settings.Instance.UpgradeCode);

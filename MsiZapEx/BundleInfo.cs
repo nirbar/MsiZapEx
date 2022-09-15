@@ -178,7 +178,7 @@ namespace MsiZapEx
             }
         }
 
-        private BundleInfo(Guid bundleProductCode)
+        public BundleInfo(Guid bundleProductCode)
         {
             ReadARP(bundleProductCode);
         }

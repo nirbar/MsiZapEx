@@ -72,7 +72,7 @@ namespace MsiZapEx
 
                     if (doSet)
                     {
-                        if (Settings.Instance?.Verbose == true)
+                        if ((Settings.Instance?.Verbose == true) || (Settings.Instance?.DryRun == true))
                         {
                             Console.WriteLine($"Setting value: '{setValue.hive}\\{setValue.key}@{setValue.name}'");
                         }
@@ -106,7 +106,7 @@ namespace MsiZapEx
 
                     if (doDelete)
                     {
-                        if (Settings.Instance?.Verbose == true)
+                        if ((Settings.Instance?.Verbose == true) || (Settings.Instance?.DryRun == true))
                         {
                             Console.WriteLine($"Deleting value: '{delValue.hive}\\{delValue.key}@{delValue.name}'");
                         }
@@ -140,7 +140,7 @@ namespace MsiZapEx
 
                     if (doDelete)
                     {
-                        if (Settings.Instance?.Verbose == true)
+                        if ((Settings.Instance?.Verbose == true) || (Settings.Instance?.DryRun == true))
                         {
                             Console.WriteLine($"Deleting key: '{delKey.hive}\\{delKey.key}'");
                         }
