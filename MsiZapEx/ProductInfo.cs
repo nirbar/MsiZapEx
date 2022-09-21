@@ -81,7 +81,7 @@ namespace MsiZapEx
                 {
                     if (!ci.Status.Equals(ComponentInfo.StatusFlags.Good))
                     {
-                        ci.PrintState();
+                        ci.PrintProductState(ProductCode);
                     }
                 }
             }

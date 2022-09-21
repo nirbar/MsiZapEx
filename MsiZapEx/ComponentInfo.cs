@@ -13,16 +13,29 @@ namespace MsiZapEx
         public enum StatusFlags
         {
             None = 0,
-            KeyPath = 1,
+            Products = 1,
+            KeyPath = 2 * Products,
 
-            Good = KeyPath
+            Good = Products | KeyPath
+        }
+
+        public struct ProductKeyPath
+        {
+            internal ProductKeyPath(Guid productCode, string keyPath, bool exists)
+            {
+                ProductCode = productCode;
+                KeyPath = keyPath;
+                KeyPathExists = exists;
+            }
+
+            public Guid ProductCode { get; private set; }
+            public string KeyPath { get; private set; }
+            public bool KeyPathExists { get; private set; }
         }
 
         public Guid ComponentCode { get; private set; }
-        public string KeyPath { get; private set; }
         public StatusFlags Status { get; private set; } = StatusFlags.None;
-
-        Dictionary<Guid, string> productToKeyPath = new Dictionary<Guid, string>();
+        public List<ProductKeyPath> ProductsKeyPath { get; } = new List<ProductKeyPath>();
 
         internal static List<ComponentInfo> GetComponents(Guid productCode)
         {
@@ -47,7 +60,7 @@ namespace MsiZapEx
                         }
 
                         ComponentInfo ci = new ComponentInfo(c);
-                        if (ci.productToKeyPath.ContainsKey(productCode))
+                        if (ci.ProductsKeyPath.Any(p => p.ProductCode.Equals(productCode)))
                         {
                             components.Add(ci);
                         }
@@ -55,6 +68,11 @@ namespace MsiZapEx
                 }
             }
             return components;
+        }
+
+        public ComponentInfo(Guid componentCode)
+            : this(componentCode.MsiObfuscate())
+        {
         }
 
         internal ComponentInfo(string obfuscatedGuid)
@@ -67,22 +85,26 @@ namespace MsiZapEx
                     {
                         ComponentCode = GuidEx.MsiObfuscate(obfuscatedGuid);
 
-                        foreach (string n in k.GetValueNames())
+                        foreach (string obfuscatedProductCode in k.GetValueNames())
                         {
-                            if (string.IsNullOrWhiteSpace(n) || n.Equals("@"))
+                            if (string.IsNullOrWhiteSpace(obfuscatedProductCode) || obfuscatedProductCode.Equals("@"))
                             {
                                 continue;
                             }
 
-                            if (Guid.TryParse(n, out Guid id))
+                            if (Guid.TryParse(obfuscatedProductCode, out Guid id))
                             {
-                                KeyPath = k.GetValue(n)?.ToString();
-                                productToKeyPath[GuidEx.MsiObfuscate(n)] = KeyPath;
+                                Guid productCode = GuidEx.MsiObfuscate(obfuscatedProductCode);
+                                string keyPath = k.GetValue(obfuscatedProductCode)?.ToString();
+                                bool exists = ValidateKeyPath(keyPath);
 
-                                if (!string.IsNullOrWhiteSpace(KeyPath))
-                                {
-                                    ValidateKeyPath();
-                                }
+                                ProductsKeyPath.Add(new ProductKeyPath(productCode, keyPath, exists));
+                                Status |= StatusFlags.Products;
+                            }
+
+                            if (!Status.HasFlag(StatusFlags.Products) || ProductsKeyPath.TrueForAll(p => p.KeyPathExists))
+                            {
+                                Status |= StatusFlags.KeyPath;
                             }
                         }
                     }
@@ -90,18 +112,53 @@ namespace MsiZapEx
             }
         }
 
-        internal void PrintState()
+        internal void PrintProducts()
         {
-            if (!Status.HasFlag(StatusFlags.KeyPath))
+            if (ProductsKeyPath.Count == 0)
             {
-                Console.WriteLine($"\tKeyPath '{KeyPath}' not found for component '{ComponentCode}'");
+                Console.WriteLine($"Component '{ComponentCode}' is not related to any product");
+            }
+
+            Console.WriteLine($"Component '{ComponentCode}' belongs to {ProductsKeyPath.Count} products");
+            foreach (ProductKeyPath product in ProductsKeyPath)
+            {
+                Console.WriteLine($"\tBelongs to product '{product.ProductCode}' with key path '{product.KeyPath}'");
+                if (!product.KeyPathExists)
+                {
+                    Console.WriteLine($"\t\tKeyPath is missing");
+                }
+
+                //TODO How does the registry reflect a permanent component with different key paths?
+                if (product.ProductCode.Equals(Guid.Empty))
+                {
+                    Console.WriteLine($"\t\tThis KeyPath is permanent for this component");
+                }
             }
         }
 
-        private Regex registryKeyPath_ = new Regex(@"^(?<root>[0-9]+):\\?(?<path>.+)$", RegexOptions.Compiled);
-        private void ValidateKeyPath()
+        internal void PrintProductState(Guid productCode)
         {
-            Match regMatch = registryKeyPath_.Match(KeyPath);
+            ProductKeyPath keyPath = ProductsKeyPath.FirstOrDefault(p => p.ProductCode.Equals(productCode));
+            if (!keyPath.ProductCode.Equals(productCode))
+            {
+                Console.WriteLine($"\tComponent '{ComponentCode}' is not related to product {productCode}");
+                return;
+            }
+            if (!keyPath.KeyPathExists)
+            {
+                Console.WriteLine($"\tKeyPath '{keyPath.KeyPath}' not found for component '{ComponentCode}'");
+            }
+        }
+
+        private static readonly Regex registryKeyPath_ = new Regex(@"^(?<root>[0-9]+):\\?(?<path>.+)$", RegexOptions.Compiled);
+        private static bool ValidateKeyPath(string keyPath)
+        {
+            if (string.IsNullOrWhiteSpace(keyPath))
+            {
+                return true;
+            }
+
+            Match regMatch = registryKeyPath_.Match(keyPath);
             if (regMatch.Success)
             {
                 string root = regMatch.Groups["root"].Value;
@@ -124,7 +181,7 @@ namespace MsiZapEx
                             hive = RegistryHive.Users;
                             break;
                         default:
-                            return;
+                            return false;
                     }
 
                     string path = regMatch.Groups["path"].Value;
@@ -136,23 +193,25 @@ namespace MsiZapEx
                         {
                             if ((hk != null) && hk.GetValueNames().Contains(name))
                             {
-                                Status |= StatusFlags.KeyPath;
+                                return true;
                             }
                         }
                     }
                 }
             }
-            else if (KeyPath.EndsWith($"{Path.DirectorySeparatorChar}") || KeyPath.EndsWith($"{Path.VolumeSeparatorChar}"))
+            else if (keyPath.EndsWith($"{Path.DirectorySeparatorChar}") || keyPath.EndsWith($"{Path.VolumeSeparatorChar}"))
             {
-                if (Directory.Exists(KeyPath))
+                if (Directory.Exists(keyPath))
                 {
-                    Status |= StatusFlags.KeyPath;
+                    return true;
                 }
             }
-            else if (File.Exists(KeyPath))
+            else if (File.Exists(keyPath))
             {
-                Status |= StatusFlags.KeyPath;
+                return true;
             }
+
+            return false;
         }
 
         internal void Prune(Guid productCode, RegistryModifier modifier)

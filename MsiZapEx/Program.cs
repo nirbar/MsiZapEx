@@ -89,7 +89,7 @@ namespace MsiZapEx
                         Console.WriteLine($"No UpgradeCode '{upgradeCode}' was found");
                     }
                 }
-                else if (!string.IsNullOrEmpty(Settings.Instance.ProductCode))
+                if (!string.IsNullOrEmpty(Settings.Instance.ProductCode))
                 {
                     Guid productCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.ProductCode) : new Guid(Settings.Instance.ProductCode);
 
@@ -123,6 +123,13 @@ namespace MsiZapEx
                             Console.WriteLine($"No ProductCode '{productCode}' was found");
                         }
                     }
+                }
+                if (!string.IsNullOrEmpty(Settings.Instance.ComponentCode))
+                {
+                    Guid componentCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.ComponentCode) : new Guid(Settings.Instance.ComponentCode);
+
+                    ComponentInfo component = new ComponentInfo(componentCode);
+                    component.PrintProducts();
                 }
             }
             catch (Exception ex)
