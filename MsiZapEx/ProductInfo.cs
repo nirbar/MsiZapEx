@@ -208,6 +208,19 @@ namespace MsiZapEx
             // Bundle dependencies
             modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{ProductCode.ToString("B")}");
 
+            //TODO Use FileSystemModifier
+            if (!string.IsNullOrEmpty(LocalPackage))
+            {
+                try
+                {
+                    File.Delete(LocalPackage);
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+
             //TODO Prune HKCR\Installer\Dependencies\*\Dependents\{ProductCode.ToString("B")}
         }
     }

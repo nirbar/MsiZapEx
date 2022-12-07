@@ -24,6 +24,9 @@ namespace MsiZapEx
         [Option("delete", Required = false, HelpText = "Forcibly remove product's Windows Installer entries from the registry")]
         public bool ForceClean { get; set; }
 
+        [Option("delete-all-related", Required = false, HelpText = "When used with --upgrade-code or --bundle-upgrade-code, deletes Windows Installer and WiX entries for all related products")]
+        public bool ForceCleanAllRelated { get; set; }
+
         [Option("dry-run", Required = false, HelpText = "Do not delete Windows Installer entries. Instead, print anything that would have been deleted")]
         public bool DryRun { get; set; }
 

@@ -51,9 +51,12 @@ namespace MsiZapEx
                     {
                         bi.PrintState();
                     }
-                    if (Settings.Instance.ForceClean && (bundles.Count == 1))
+                    if ((Settings.Instance.ForceClean && (bundles.Count == 1)) || Settings.Instance.ForceCleanAllRelated)
                     {
-                        bundles[0].Prune();
+                        foreach (BundleInfo bi in bundles)
+                        {
+                            bi.Prune();
+                        }
                     }
                 }
                 if (!string.IsNullOrEmpty(Settings.Instance.BundleProductCode))
@@ -79,9 +82,12 @@ namespace MsiZapEx
                     if (upgrade != null)
                     {
                         upgrade.PrintState();
-                        if (Settings.Instance.ForceClean && (upgrade.RelatedProducts.Count == 1))
+                        if ((Settings.Instance.ForceClean && (upgrade.RelatedProducts.Count == 1)) || Settings.Instance.ForceCleanAllRelated)
                         {
-                            upgrade.Prune(upgrade.RelatedProducts[0]);
+                            foreach (ProductInfo pi in upgrade.RelatedProducts)
+                            {
+                                upgrade.Prune(pi);
+                            }
                         }
                     }
                     else
