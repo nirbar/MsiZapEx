@@ -11,6 +11,7 @@ MsiZapEx is a command line utility and .NET assembly that enumerates Windows Ins
 - --bundle-upgrade-code _UUID_: List all WiX bundles for the given bundle UpgradeCode
 - --bundle-product-code _UUID_: Detect WiX bundle for the given bundle Id (AKA ProductCode)
 - --delete: Delete all WiX and Windows Installer entries for the provided UUID. Note that if multiple bundles or products are detected for a given UpgradeCode then you must delete each ProductCode separately
+- --delete-all-related: When used with --upgrade-code or --bundle-upgrade-code, deletes Windows Installer and WiX entries for all related products
 - --dry-run: May be specified with --delete only. Print all WiX and Windows Installer entries for the provided UUID that would be deleted
 - --obfuscated: For a Windows Installer ProductCode or UpgradeCode or ComponentCode, the UUID is provided in its obfuscated form
 - --verbose: Print each registry modification
