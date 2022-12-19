@@ -10,6 +10,7 @@ namespace MsiZapEx
         List<DeleteKey> deleteKeys_ = new List<DeleteKey>();
         List<DeleteValue> deleteValues_ = new List<DeleteValue>();
         List<SetValue> setValues_ = new List<SetValue>();
+        List<ReducePendingFileRenameOperations> reducePendingFileRenameOperations_ = new List<ReducePendingFileRenameOperations>();
 
         public void DeferDeleteKey(RegistryHive hive, RegistryView view, string key, Func<RegistryKey, bool> predicate = null)
         {
@@ -48,13 +49,66 @@ namespace MsiZapEx
             deleteValues_.Add(deleteValue);
         }
 
+        public void DeferRemoveFromPendingOperations(string filePath)
+        {
+            ReducePendingFileRenameOperations reduce = new ReducePendingFileRenameOperations();
+            reduce.path = filePath;
+            reducePendingFileRenameOperations_.Add(reduce);
+        }
+
         public void Dispose()
         {
+            DoReduceFilePendingOperations();
             DoSetValues();
             DoDeleteValues();
             DoDeleteKeys();
         }
 
+        // Must be called before DoSetValues() and DoDeleteValues()
+        private void DoReduceFilePendingOperations()
+        {
+            using (RegistryKey root = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default))
+            {
+                using (RegistryKey k = root.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Session Manager", false))
+                {
+                    if (k != null)
+                    {
+                        string[] paths = k.GetValue("PendingFileRenameOperations") as string[];
+                        if (paths != null)
+                        {
+                            List<string> newPaths = new List<string>(paths);
+                            for (int i = 0; i < paths.Length; i += 2)
+                            {
+                                string p1 = paths[i];
+                                if (p1.StartsWith(@"\??\"))
+                                {
+                                    p1 = p1.Substring(4);
+                                }
+                                if (reducePendingFileRenameOperations_.Any(r => r.path.Equals(p1, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    newPaths.RemoveAt(i + 1);
+                                    newPaths.RemoveAt(i);
+                                }
+                            }
+
+                            if (newPaths.Count != paths.Length)
+                            {
+                                if (newPaths.Count == 0)
+                                {
+                                    DeferDeleteValue(RegistryHive.LocalMachine, RegistryView.Default, "SYSTEM\\CurrentControlSet\\Control\\Session Manager", "PendingFileRenameOperations");
+                                }
+                                else
+                                {
+                                    DeferSetValue(RegistryHive.LocalMachine, RegistryView.Default, "SYSTEM\\CurrentControlSet\\Control\\Session Manager", "PendingFileRenameOperations", RegistryValueKind.MultiString, newPaths.ToArray());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Must be called after DoReduceFilePendingOperations()
         private void DoSetValues()
         {
             foreach (SetValue setValue in setValues_)
@@ -89,6 +143,7 @@ namespace MsiZapEx
             }
         }
 
+        // Must be called after DoReduceFilePendingOperations()
         private void DoDeleteValues()
         {
             foreach (DeleteValue delValue in deleteValues_)
@@ -178,6 +233,10 @@ namespace MsiZapEx
             public RegistryView view;
             public string key;
             public Func<RegistryKey, bool> predicate;
+        }
+        struct ReducePendingFileRenameOperations
+        {
+            public string path;
         }
     }
 }

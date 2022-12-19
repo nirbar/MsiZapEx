@@ -111,6 +111,21 @@ namespace MsiZapEx
                 {
                     modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{BundleProviderKey}");
                 }
+
+                // Remove bundle from PendingFileRenameOperations
+                if (!string.IsNullOrEmpty(BundleCachePath))
+                {
+                    //TODO Use FileSystemModifier
+                    try
+                    {
+                        File.Delete(BundleCachePath);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                    modifier.DeferRemoveFromPendingOperations(BundleCachePath);
+                }
             }
         }
 

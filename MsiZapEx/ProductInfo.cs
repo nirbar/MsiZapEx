@@ -31,6 +31,7 @@ namespace MsiZapEx
         public string InstallLocation { get; private set; }
         public List<ComponentInfo> Components { get; private set; }
         public List<PatchInfo> Patches { get; private set; }
+        public List<string> Dependants { get; private set; }
         public RegistryView View { get; private set; }
         public StatusFlags Status { get; private set; } = StatusFlags.None;
 
@@ -184,7 +185,27 @@ namespace MsiZapEx
                     }
                 }
 
-                //TODO Parse and print HKCR\Installer\Dependencies\*\Dependents\{ProductCode.ToString("B")}
+                Dependants = new List<string>();
+                using (RegistryKey k = hkcr.OpenSubKey(@"Installer\Dependencies", false))
+                {
+                    if (k != null)
+                    {
+                        string[] subkeys = k.GetSubKeyNames();
+                        if (subkeys != null)
+                        {
+                            foreach (string subkey in subkeys)
+                            {
+                                using (RegistryKey sk = k.OpenSubKey($@"{subkey}\Dependents\{ProductCode.ToString("B")}", false))
+                                {
+                                    if (sk != null)
+                                    {
+                                        Dependants.Add(subkey);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -205,8 +226,13 @@ namespace MsiZapEx
             modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Products\{obfuscatedProductCode}");
             modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Features\{obfuscatedProductCode}");
 
-            // Bundle dependencies
+            // Dependencies
             modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{ProductCode.ToString("B")}");
+
+            foreach (string d in Dependants)
+            {
+                modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{d}\Dependents\{ProductCode.ToString("B")}");
+            }
 
             //TODO Use FileSystemModifier
             if (!string.IsNullOrEmpty(LocalPackage))
@@ -220,8 +246,6 @@ namespace MsiZapEx
 
                 }
             }
-
-            //TODO Prune HKCR\Installer\Dependencies\*\Dependents\{ProductCode.ToString("B")}
         }
     }
 }
