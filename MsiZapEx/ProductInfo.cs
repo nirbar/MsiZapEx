@@ -106,6 +106,7 @@ namespace MsiZapEx
 
         private void Read(string obfuscatedGuid)
         {
+            ProductCode = GuidEx.MsiObfuscate(obfuscatedGuid);
             using (RegistryKey hklm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
                 using (RegistryKey k = hklm64.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedGuid}\InstallProperties", false))
@@ -114,27 +115,10 @@ namespace MsiZapEx
                     {
                         Status |= StatusFlags.HklmProduct;
 
-                        ProductCode = GuidEx.MsiObfuscate(obfuscatedGuid);
                         LocalPackage = k.GetValue("LocalPackage")?.ToString();
                         DisplayName = k.GetValue("DisplayName")?.ToString();
                         DisplayVersion = k.GetValue("DisplayVersion")?.ToString();
                         InstallLocation = k.GetValue("InstallLocation")?.ToString();
-
-                        Components = ComponentInfo.GetComponents(ProductCode);
-                        if (Components.Count > 0)
-                        {
-                            Status |= StatusFlags.Components;
-                            if (Components.TrueForAll(c => c.Status == ComponentInfo.StatusFlags.Good))
-                            {
-                                Status |= StatusFlags.ComponentsGood;
-                            }
-                        }
-
-                        Patches = PatchInfo.GetPatches(ProductCode);
-                        if ((Patches.Count == 0) || Patches.TrueForAll(p => p.Status == PatchInfo.StatusFlags.Good))
-                        {
-                            Status |= StatusFlags.PatchesGood;
-                        }
                     }
                 }
                 using (RegistryKey k = hklm64.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedGuid}\Features", false))
@@ -206,6 +190,22 @@ namespace MsiZapEx
                         }
                     }
                 }
+            }
+
+            Components = ComponentInfo.GetComponents(ProductCode);
+            if (Components.Count > 0)
+            {
+                Status |= StatusFlags.Components;
+                if (Components.TrueForAll(c => c.Status == ComponentInfo.StatusFlags.Good))
+                {
+                    Status |= StatusFlags.ComponentsGood;
+                }
+            }
+
+            Patches = PatchInfo.GetPatches(ProductCode);
+            if ((Patches.Count == 0) || Patches.TrueForAll(p => p.Status == PatchInfo.StatusFlags.Good))
+            {
+                Status |= StatusFlags.PatchesGood;
             }
         }
 

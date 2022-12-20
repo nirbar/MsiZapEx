@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <Import Project="$(SolutionDir)TidyBuild.user.props" Condition="Exists('$(SolutionDir)TidyBuild.user.props')" />
   <PropertyGroup>
-    <FullVersion Condition="'$(FullVersion)'==''">0.0.7</FullVersion>
+    <FullVersion Condition="'$(FullVersion)'==''">0.0.8</FullVersion>
     <DefineConstants Condition="'$(MSBuildProjectExtension)'=='.wixproj'">FullVersion=$(FullVersion);$(DefineConstants)</DefineConstants>
   </PropertyGroup>
 </Project>
