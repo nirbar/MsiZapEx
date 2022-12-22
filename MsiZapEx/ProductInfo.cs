@@ -2,11 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using static MsiZapEx.ComponentInfo;
+using System.Linq;
 
 namespace MsiZapEx
 {
     public class ProductInfo
     {
+        [Flags]
         public enum StatusFlags
         {
             None = 0,
@@ -20,6 +23,11 @@ namespace MsiZapEx
             ComponentsGood = Components * 2,
 
             PatchesGood = ComponentsGood * 2,
+
+            /// <summary>
+            /// Products that have enough data to be detected and uninstalled via "Add/Remove Programs" applet
+            /// </summary>
+            MinGood = ARP | HklmProduct,
 
             Good = PatchesGood | ComponentsGood | Components | ARP | HklmFeatures | HkcrFeatures | HkcrProduct | HklmProduct
         }
@@ -80,7 +88,7 @@ namespace MsiZapEx
             {
                 foreach (ComponentInfo ci in Components)
                 {
-                    if (!ci.Status.Equals(ComponentInfo.StatusFlags.Good))
+                    if (!ci.Status.HasFlag(ComponentInfo.StatusFlags.Good))
                     {
                         ci.PrintProductState(ProductCode);
                     }
@@ -91,7 +99,7 @@ namespace MsiZapEx
             {
                 foreach (PatchInfo pi in Patches)
                 {
-                    if (!pi.Status.Equals(PatchInfo.StatusFlags.Good))
+                    if (!pi.Status.HasFlag(PatchInfo.StatusFlags.Good))
                     {
                         pi.PrintState();
                     }
@@ -102,6 +110,44 @@ namespace MsiZapEx
         internal ProductInfo(string obfuscatedGuid)
         {
             Read(obfuscatedGuid);
+        }
+
+        /// <summary>
+        /// Return all products that fails <see cref="ProductInfo.StatusFlags.MinGood"/> check.
+        /// Products are enumerated from Components' registry key. Thus a product will not be returned if it has no components at all
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="FileNotFoundException">Components root registry key is missing</exception>
+        public static List<ProductInfo> GetOrphanProducts()
+        {
+            List<ProductInfo> products = new List<ProductInfo>();
+            List<ComponentInfo> allComponents = ComponentInfo.GetAllComponents();
+
+            foreach (ComponentInfo ci in allComponents)
+            {
+                // Ignore default value
+                if (ci.ComponentCode.Equals(Guid.Empty))
+                {
+                    continue;
+                }
+
+                foreach (ProductKeyPath keyPath in ci.ProductsKeyPath)
+                {
+                    if (keyPath.ProductCode.Equals(Guid.Empty))
+                    {
+                        continue;
+                    }
+
+                    ProductInfo pi = products.FirstOrDefault(p => p.ProductCode.Equals(keyPath.ProductCode));
+                    if (pi == null)
+                    {
+                        pi = new ProductInfo(keyPath.ProductCode);
+                        products.Add(pi);
+                    }
+                }
+            }
+            products.RemoveAll(p => p.Status.HasFlag(StatusFlags.MinGood));
+            return products;
         }
 
         private void Read(string obfuscatedGuid)
@@ -196,14 +242,14 @@ namespace MsiZapEx
             if (Components.Count > 0)
             {
                 Status |= StatusFlags.Components;
-                if (Components.TrueForAll(c => c.Status == ComponentInfo.StatusFlags.Good))
+                if (Components.TrueForAll(c => c.Status.HasFlag(ComponentInfo.StatusFlags.Good)))
                 {
                     Status |= StatusFlags.ComponentsGood;
                 }
             }
 
             Patches = PatchInfo.GetPatches(ProductCode);
-            if ((Patches.Count == 0) || Patches.TrueForAll(p => p.Status == PatchInfo.StatusFlags.Good))
+            if ((Patches.Count == 0) || Patches.TrueForAll(p => p.Status.HasFlag(PatchInfo.StatusFlags.Good)))
             {
                 Status |= StatusFlags.PatchesGood;
             }

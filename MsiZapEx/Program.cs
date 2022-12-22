@@ -137,6 +137,15 @@ namespace MsiZapEx
                     ComponentInfo component = new ComponentInfo(componentCode);
                     component.PrintProducts();
                 }
+                if (Settings.Instance.DetectOrphanProducts)
+                {
+                    List<ProductInfo> orphan = ProductInfo.GetOrphanProducts();
+                    Console.WriteLine($"{orphan.Count} orphan product(s) detected");
+                    foreach (ProductInfo pi in orphan)
+                    {
+                        pi.PrintState();
+                    }
+                }
             }
             catch (Exception ex)
             {

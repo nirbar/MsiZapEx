@@ -12,6 +12,7 @@ namespace MsiZapEx
         // HKLM32 Software\Microsoft\Windows\CurrentVersion\Uninstall\<BundleProductCode>
         // HKCR HKEY_CLASSES_ROOT\Installer\Dependencies\<MsiProductCode or BundleBundleProviderKey>\@ = <MsiProductCode Or BundleProductCode>
         // HKCR HKEY_CLASSES_ROOT\Installer\Dependencies\*\Dependents\<BundleProductCode>
+        [Flags]
         public enum StatusFlags
         {
             None = 0,

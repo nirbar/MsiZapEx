@@ -21,6 +21,9 @@ namespace MsiZapEx
         [Option("component-code", Required = false, HelpText = "Detect products by ComponentCode", Group = "codes")]
         public string ComponentCode { get; set; }
 
+        [Option("detect-orphan-products", Required = false, HelpText = "List all products that can't be normally uninstalled due to missing registration data", Group = "codes")]
+        public bool DetectOrphanProducts { get; set; }
+
         [Option("delete", Required = false, HelpText = "Forcibly remove product's Windows Installer entries from the registry")]
         public bool ForceClean { get; set; }
 

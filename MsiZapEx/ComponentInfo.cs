@@ -36,10 +36,14 @@ namespace MsiZapEx
         public Guid ComponentCode { get; private set; }
         public StatusFlags Status { get; private set; } = StatusFlags.None;
         public List<ProductKeyPath> ProductsKeyPath { get; } = new List<ProductKeyPath>();
+        private static List<ComponentInfo> _components = new List<ComponentInfo>();
 
-        internal static List<ComponentInfo> GetComponents(Guid productCode)
+        internal static List<ComponentInfo> GetAllComponents()
         {
-            List<ComponentInfo> components = new List<ComponentInfo>();
+            if (_components.Count > 0)
+            {
+                return _components;
+            }
 
             using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
@@ -54,20 +58,29 @@ namespace MsiZapEx
                     foreach (string c in componentCodes)
                     {
                         // Ignore default value
-                        if (string.IsNullOrWhiteSpace(c) || c.Equals("@") || !Guid.TryParse(c, out Guid id))
+                        if (string.IsNullOrWhiteSpace(c) || c.Equals("@") || !Guid.TryParse(c, out Guid id) || id.Equals(Guid.Empty))
                         {
                             continue;
                         }
 
-                        ComponentInfo ci = new ComponentInfo(c);
-                        if (ci.ProductsKeyPath.Any(p => p.ProductCode.Equals(productCode)))
+                        Guid componentCode = GuidEx.MsiObfuscate(c);
+                        ComponentInfo ci = _components.FirstOrDefault(cc => cc.ComponentCode.Equals(componentCode));
+                        if (ci == null)
                         {
-                            components.Add(ci);
+                            ci = new ComponentInfo(c);
                         }
                     }
                 }
             }
-            return components;
+            return _components;
+        }
+
+        internal static List<ComponentInfo> GetComponents(Guid productCode)
+        {
+            GetAllComponents();
+            List<ComponentInfo> components = new List<ComponentInfo>();
+            components.AddRange(_components.FindAll(ci => ci.ProductsKeyPath.Any(p => p.ProductCode.Equals(productCode))));
+            return components; 
         }
 
         public ComponentInfo(Guid componentCode)
@@ -77,6 +90,16 @@ namespace MsiZapEx
 
         internal ComponentInfo(string obfuscatedGuid)
         {
+            Guid componentCode = GuidEx.MsiObfuscate(obfuscatedGuid);
+            ComponentInfo ci = _components.FirstOrDefault(c => c.ComponentCode.Equals(componentCode));
+            if (ci != null)
+            {
+                this.Status = ci.Status;
+                this.ComponentCode = ci.ComponentCode;
+                this.ProductsKeyPath.AddRange(ci.ProductsKeyPath);
+                return;
+            }
+
             using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
                 using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components\{obfuscatedGuid}", false))
@@ -110,6 +133,7 @@ namespace MsiZapEx
                     }
                 }
             }
+            _components.Add(this);
         }
 
         internal void PrintProducts()

@@ -176,7 +176,7 @@ namespace MsiZapEx
             if (RelatedProducts.Count > 0)
             {
                 Status |= StatusFlags.Products;
-                if (RelatedProducts.TrueForAll(p => p.Status == ProductInfo.StatusFlags.Good))
+                if (RelatedProducts.TrueForAll(p => p.Status.HasFlag(ProductInfo.StatusFlags.Good)))
                 {
                     Status |= StatusFlags.ProductsGood;
                 }
