@@ -141,9 +141,16 @@ namespace MsiZapEx
                 {
                     List<ProductInfo> orphan = ProductInfo.GetOrphanProducts();
                     Console.WriteLine($"{orphan.Count} orphan product(s) detected");
-                    foreach (ProductInfo pi in orphan)
+                    using (RegistryModifier modifier = new RegistryModifier())
                     {
-                        pi.PrintState();
+                        foreach (ProductInfo pi in orphan)
+                        {
+                            pi.PrintState();
+                            if (Settings.Instance.ForceCleanAllRelated)
+                            {
+                                pi.Prune(modifier);
+                            }
+                        }
                     }
                 }
             }
