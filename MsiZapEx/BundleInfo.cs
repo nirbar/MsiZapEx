@@ -231,11 +231,14 @@ namespace MsiZapEx
 
                             using (RegistryKey hkDependents = hkProviderKey.OpenSubKey("Dependents", false))
                             {
-                                foreach (string sk in hkDependents.GetSubKeyNames())
+                                if (hkDependents != null)
                                 {
-                                    if (!string.IsNullOrEmpty(sk) && Guid.TryParse(sk, out Guid dg) && !dg.Equals(BundleProductCode))
+                                    foreach (string sk in hkDependents.GetSubKeyNames())
                                     {
-                                        Dependencies.Add(sk);
+                                        if (!string.IsNullOrEmpty(sk) && Guid.TryParse(sk, out Guid dg) && !dg.Equals(BundleProductCode))
+                                        {
+                                            Dependencies.Add(sk);
+                                        }
                                     }
                                 }
                             }
@@ -308,10 +311,10 @@ namespace MsiZapEx
                     if (!string.IsNullOrEmpty(bpk))
                     {
                         Status |= StatusFlags.ArpPorviderKey;
-                    }
-                    if (string.IsNullOrEmpty(BundleProviderKey))
-                    {
-                        ReadDependencies(bpk);
+                        if (string.IsNullOrEmpty(BundleProviderKey))
+                        {
+                            ReadDependencies(bpk);
+                        }
                     }
                 }
             }
