@@ -40,6 +40,7 @@ namespace MsiZapEx
         public List<ComponentInfo> Components { get; private set; }
         public List<PatchInfo> Patches { get; private set; }
         public List<string> Dependants { get; private set; }
+        public List<string> Features { get; private set; }
         public RegistryView View { get; private set; }
         public StatusFlags Status { get; private set; } = StatusFlags.None;
 
@@ -207,11 +208,25 @@ namespace MsiZapEx
                         Status |= StatusFlags.HkcrProduct;
                     }
                 }
+
+                Features = new List<string>();
                 using (RegistryKey k = hkcr.OpenSubKey($@"Installer\Features\{obfuscatedGuid}", false))
                 {
                     if (k != null)
                     {
                         Status |= StatusFlags.HkcrFeatures;
+
+                        string[] features = k.GetValueNames();
+                        if (features != null)
+                        {
+                            foreach (string f in features)
+                            {
+                                if (!string.IsNullOrEmpty(f) && !f.Equals("@"))
+                                {
+                                    Features.Add(f);
+                                }
+                            }
+                        }
                     }
                 }
 
