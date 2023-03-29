@@ -43,10 +43,12 @@ namespace MsiZapEx
         public List<string> Features { get; private set; }
         public RegistryView View { get; private set; }
         public StatusFlags Status { get; private set; } = StatusFlags.None;
+        public bool IsShallow { get; private set; }
 
-        public ProductInfo(Guid productCode)
+        public ProductInfo(Guid productCode, bool includeComponents = true)
         {
             string obfuscatedGuid = GuidEx.MsiObfuscate(productCode);
+            IsShallow = !includeComponents;
             Read(obfuscatedGuid);
         }
 
@@ -81,17 +83,24 @@ namespace MsiZapEx
                 Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\<ProductCode SUID>\InstallProperties");
             }
 
-            if (!Status.HasFlag(StatusFlags.Components))
+            if (IsShallow)
             {
-                Console.WriteLine($"\tProduct has no components");
+                Console.WriteLine("\tComponentes were not checked");
             }
-            else if (!Status.HasFlag(StatusFlags.ComponentsGood))
+            else
             {
-                foreach (ComponentInfo ci in Components)
+                if (!Status.HasFlag(StatusFlags.Components))
                 {
-                    if (!ci.Status.HasFlag(ComponentInfo.StatusFlags.Good))
+                    Console.WriteLine($"\tProduct has no components");
+                }
+                else if (!Status.HasFlag(StatusFlags.ComponentsGood))
+                {
+                    foreach (ComponentInfo ci in Components)
                     {
-                        ci.PrintProductState(ProductCode);
+                        if (!ci.Status.HasFlag(ComponentInfo.StatusFlags.Good))
+                        {
+                            ci.PrintProductState(ProductCode);
+                        }
                     }
                 }
             }
@@ -106,10 +115,16 @@ namespace MsiZapEx
                     }
                 }
             }
+
+            if (Settings.Instance.Verbose)
+            {
+                Console.WriteLine($"\tFeatures: {Features.Aggregate((a, c) => $"{a}, {c}")}");
+            }
         }
 
-        internal ProductInfo(string obfuscatedGuid)
+        internal ProductInfo(string obfuscatedGuid, bool includeComponents = true)
         {
+            IsShallow = !includeComponents;
             Read(obfuscatedGuid);
         }
 
@@ -253,13 +268,20 @@ namespace MsiZapEx
                 }
             }
 
-            Components = ComponentInfo.GetComponents(ProductCode);
-            if (Components.Count > 0)
+            if (IsShallow)
             {
-                Status |= StatusFlags.Components;
-                if (Components.TrueForAll(c => c.Status.HasFlag(ComponentInfo.StatusFlags.Good)))
+                Components = new List<ComponentInfo>();
+            }
+            else
+            {
+                Components = ComponentInfo.GetComponents(ProductCode);
+                if (Components.Count > 0)
                 {
-                    Status |= StatusFlags.ComponentsGood;
+                    Status |= StatusFlags.Components;
+                    if (Components.TrueForAll(c => c.Status.HasFlag(ComponentInfo.StatusFlags.Good)))
+                    {
+                        Status |= StatusFlags.ComponentsGood;
+                    }
                 }
             }
 

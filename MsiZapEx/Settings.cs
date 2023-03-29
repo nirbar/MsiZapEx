@@ -1,4 +1,6 @@
 ﻿using CommandLine;
+using System;
+using System.Collections.Generic;
 
 namespace MsiZapEx
 {
@@ -24,10 +26,10 @@ namespace MsiZapEx
         [Option("detect-orphan-products", Required = false, HelpText = "List all products that can't be normally uninstalled due to missing registration data", Group = "codes")]
         public bool DetectOrphanProducts { get; set; }
 
-        [Option("delete", Required = false, HelpText = "Forcibly remove product's Windows Installer entries from the registry")]
+        [Option("delete", Required = false, HelpText = "Forcibly remove product's Windows Installer entries from the registry", SetName = "delete")]
         public bool ForceClean { get; set; }
 
-        [Option("delete-all-related", Required = false, HelpText = "When used with --upgrade-code or --bundle-upgrade-code, deletes Windows Installer and WiX entries for all related products. When used with --detect-orphan-products, deletes registration for all orphan products")]
+        [Option("delete-all-related", Required = false, HelpText = "When used with --upgrade-code or --bundle-upgrade-code, deletes Windows Installer and WiX entries for all related products. When used with --detect-orphan-products, deletes registration for all orphan products", SetName = "delete-all-related")]
         public bool ForceCleanAllRelated { get; set; }
 
         [Option("dry-run", Required = false, HelpText = "Do not delete Windows Installer entries. Instead, print anything that would have been deleted")]
@@ -38,5 +40,8 @@ namespace MsiZapEx
 
         [Option("verbose", Required = false, HelpText = "Verbose logging")]
         public bool Verbose { get; set; }
+
+        [Option("shallow", Required = false, HelpText = "Whether or not to enumerate products' components. Specifying this may significally reduce run time", SetName = "shallow")]
+        public bool Shallow { get; set; }
     }
 }

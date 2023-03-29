@@ -78,7 +78,7 @@ namespace MsiZapEx
                 {
                     Guid upgradeCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.UpgradeCode) : new Guid(Settings.Instance.UpgradeCode);
 
-                    UpgradeInfo upgrade = new UpgradeInfo(upgradeCode);
+                    UpgradeInfo upgrade = new UpgradeInfo(upgradeCode, Settings.Instance.Shallow);
                     if (upgrade != null)
                     {
                         upgrade.PrintState();
@@ -99,7 +99,7 @@ namespace MsiZapEx
                 {
                     Guid productCode = Settings.Instance.Obfuscated ? GuidEx.MsiObfuscate(Settings.Instance.ProductCode) : new Guid(Settings.Instance.ProductCode);
 
-                    UpgradeInfo upgrade = UpgradeInfo.FindByProductCode(productCode);
+                    UpgradeInfo upgrade = UpgradeInfo.FindByProductCode(productCode, Settings.Instance.Shallow);
                     if (upgrade != null)
                     {
                         ProductInfo product = upgrade.RelatedProducts.First(p => p.ProductCode.Equals(productCode));
@@ -156,7 +156,8 @@ namespace MsiZapEx
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine(ex.Message);
+                Environment.Exit(-1);
             }
         }
     }

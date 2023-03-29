@@ -28,10 +28,10 @@ namespace MsiZapEx
         public List<ProductInfo> RelatedProducts { get; private set; }
         public StatusFlags Status { get; private set; } = StatusFlags.None;
 
-        public UpgradeInfo(Guid upgradeCode)
+        public UpgradeInfo(Guid upgradeCode, bool shallow = false)
         {
             UpgradeCode = upgradeCode;
-            Enumerate();
+            Enumerate(shallow);
         }
 
         public void PrintState()
@@ -66,13 +66,13 @@ namespace MsiZapEx
             }
         }
 
-        private void Enumerate()
+        private void Enumerate(bool shallow)
         {
             RelatedProducts = new List<ProductInfo>();
-            GetRelatedProducts();
+            GetRelatedProducts(shallow);
         }
 
-        public static UpgradeInfo FindByProductCode(Guid productCode)
+        public static UpgradeInfo FindByProductCode(Guid productCode, bool shallow = false)
         {
             string obfuscatedProductCode = GuidEx.MsiObfuscate(productCode);
             using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
@@ -95,7 +95,7 @@ namespace MsiZapEx
                                 if (obfuscatedProductCodes.Contains(obfuscatedProductCode))
                                 {
                                     Guid upgradeCode = GuidEx.MsiObfuscate(u);
-                                    UpgradeInfo upgrade = new UpgradeInfo(upgradeCode);
+                                    UpgradeInfo upgrade = new UpgradeInfo(upgradeCode, shallow);
                                     return upgrade;
                                 }
                             }
@@ -106,7 +106,7 @@ namespace MsiZapEx
             return null;
         }
 
-        private void GetRelatedProducts()
+        private void GetRelatedProducts(bool shallow)
         {
             string obfuscatedUpgradeCode = GuidEx.MsiObfuscate(UpgradeCode);
             bool hkcrHklmMatch = true;
@@ -138,7 +138,7 @@ namespace MsiZapEx
                                             hkcrHklmMatch = false;
                                         }
 
-                                        ProductInfo pi = new ProductInfo(p);
+                                        ProductInfo pi = new ProductInfo(p, !shallow);
                                         RelatedProducts.Add(pi);
                                     }
                                 }
