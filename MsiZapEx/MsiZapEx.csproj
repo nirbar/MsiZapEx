@@ -15,7 +15,7 @@
     <Authors>Nir Bar</Authors>
     <Title>Utility tool to detect and prune Windows Installer and WiX  bundles registry entries</Title>
     <PackageTags>MSI Installer MsiZap MsiZapEx WiX bundles bootstrapper</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!--TODO PackageReadmeFile>README.md</PackageReadmeFile-->
     <PackageDescription>Utility tool to detect and prune Windows Installer and WiX  bundles registry entries:
 			Products related to a given UpgradeCode
 			Product by ProductCode
@@ -30,10 +30,11 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1"/>
+    <!--PackageReference Include="MSBuildTasks" Version="1.5.0.235" />
     <PackageReference Include="TidyBuild" Version="1.5.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    </PackageReference-->
   </ItemGroup>
 
   <ItemGroup>
