@@ -1,54 +1,54 @@
 name: MsiZapEx Build
 on:
-  push:
-    tags:
-      - v*
   workflow_dispatch:
+    inputs:
+      publish_nuget:
+        description: 'Publish nuget package?'
+        required: true
+        default: false
+        type: boolean
+      version:
+        description: 'Build & package version'
+        required: true
+        default: 0.0.14
+        type: string
 jobs:
   Build:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.3.0
       - uses: microsoft/setup-msbuild@v1.0.2
 
-      - run: nuget restore
+      - name: Set version
+        run: Add-Content -Path $env:GITHUB_ENV -Value "FULL_VERSION=${{ github.event.inputs.version }}.${{ github.run_number }}"
 
-      - name: Build solution
-        run: msbuild MsiZapEx.sln -m -p:Configuration=Release
-
-      - name: Extract tag or branch name
-        uses: actions-ecosystem/action-regex-match@v2.0.2
-        id: tagName
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          text: ${{ github.ref }}
-          regex: '^refs\/tags\/v(.*)$'
-
-      - name: Publish nuget packages to github and nuget.org
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          nuget.exe pack "MsiZapEx\MsiZapEx.nuspec" -Version "${{ steps.tagName.outputs.group1 }}"
-          dotnet nuget add source --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
-          dotnet nuget push MsiZapEx.${{ steps.tagName.outputs.group1 }}.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source github
-          dotnet nuget push MsiZapEx.${{ steps.tagName.outputs.group1 }}.nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
+      - name: Build
+        run: dotnet build MsiZapEx.sln -p:Configuration=Release -p:Version=${{ env.FULL_VERSION }}
 
       - name: Publish artifacts
         uses: actions/upload-artifact@v2
         with:
           name: MsiZapEx
           path: |
-            build\bin\Release\MsiZapEx\*.exe
-            build\bin\Release\MsiZapEx\*.dll
-            ./*.nupkg
+            build\net40\MsiZapEx\Release\bin\*.exe
+            build\net40\MsiZapEx\Release\bin\*.dll
+
+      - name: Publish nuget packages to github and nuget.org
+        if: ${{ github.event.inputs.publish_nuget == 'true' }}
+        run: |
+          dotnet pack MsiZapEx.sln -p:Configuration=Release -p:Version=${{ env.FULL_VERSION }}
+          dotnet nuget add source --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          dotnet nuget push build\MsiZapEx\Release\bin\MsiZapEx.${{ env.FULL_VERSION }}.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source github
+          dotnet nuget push build\MsiZapEx\Release\bin\MsiZapEx.${{ env.FULL_VERSION }}.nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
 
       - name: Publish release
         uses: softprops/action-gh-release@v0.1.14
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ github.event.inputs.publish_nuget == 'true' }}
         with:
           prerelease: false
           generate_release_notes: true
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.FULL_VERSION }}
           files: |
-            MsiZapEx.${{ steps.tagName.outputs.group1 }}.nupkg
-            build\bin\Release\MsiZapEx\MsiZapEx.exe
-            build\bin\Release\MsiZapEx\CommandLine.dll
+            build\MsiZapEx\Release\bin\MsiZapEx.${{ env.FULL_VERSION }}.nupkg
+            build\net40\MsiZapEx\Release\bin\MsiZapEx.exe
+            build\net40\MsiZapEx\Release\bin\CommandLine.dll

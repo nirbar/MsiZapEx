@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+
+    <BaseBuildFolder>$(MSBuildThisFileDirectory)\build\</BaseBuildFolder>
+    <BuildFolder>$(BaseBuildFolder)\$(TargetFramework)\</BuildFolder>
+    <OutputPath>$(BuildFolder)$(MSBuildProjectName)\$(Configuration)\bin\</OutputPath>
+    <OutDirLib>$(BuildFolder)lib\$(Configuration)\</OutDirLib>
+    <IntermediateOutputPath>$(BuildFolder)$(MSBuildProjectName)\$(Configuration)\obj\</IntermediateOutputPath>
+    
+    <BaseOutputPath>$(OutputPath)..\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(BaseBuildFolder)$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+
+    <OutDir>$(OutputPath)</OutDir>
+    <IntDir>$(IntermediateOutputPath)</IntDir>
+    <OutputDirectory>$(OutputPath)</OutputDirectory>
+    <IntermediateDirectory>$(IntermediateOutputPath)</IntermediateDirectory>
+  </PropertyGroup>
+</Project>
