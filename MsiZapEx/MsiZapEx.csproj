@@ -14,7 +14,7 @@
     <RepositoryType>git</RepositoryType>
     <Authors>Nir Bar</Authors>
     <Title>Utility tool to detect and prune Windows Installer and WiX  bundles registry entries</Title>
-    <PackageTags>MSI Installer MsiZap MsiZapEx WiX bundles bootstrapper</PackageTags>
+    <PackageTags>MSI Installer MsiZap MsiZapEx WiX bundles bootstrapper PanelSW</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageDescription>Utility tool to detect and prune Windows Installer and WiX  bundles registry entries:
 			Products related to a given UpgradeCode

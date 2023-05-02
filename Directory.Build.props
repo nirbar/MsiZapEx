@@ -3,7 +3,7 @@
   <PropertyGroup>
 
     <BaseBuildFolder>$(MSBuildThisFileDirectory)\build\</BaseBuildFolder>
-    <BuildFolder>$(BaseBuildFolder)\$(TargetFramework)\</BuildFolder>
+    <BuildFolder>$(BaseBuildFolder)$(TargetFramework)\</BuildFolder>
     <OutputPath>$(BuildFolder)$(MSBuildProjectName)\$(Configuration)\bin\</OutputPath>
     <OutDirLib>$(BuildFolder)lib\$(Configuration)\</OutDirLib>
     <IntermediateOutputPath>$(BuildFolder)$(MSBuildProjectName)\$(Configuration)\obj\</IntermediateOutputPath>
