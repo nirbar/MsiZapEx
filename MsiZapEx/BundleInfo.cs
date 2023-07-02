@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +9,7 @@ namespace MsiZapEx
 
     public class BundleInfo
     {
-        // HKLM32 Software\Microsoft\Windows\CurrentVersion\Uninstall\<BundleProductCode>
+        // HKLM32/HKLM64 Software\Microsoft\Windows\CurrentVersion\Uninstall\<BundleProductCode>
         // HKCR HKEY_CLASSES_ROOT\Installer\Dependencies\<MsiProductCode or BundleBundleProviderKey>\@ = <MsiProductCode Or BundleProductCode>
         // HKCR HKEY_CLASSES_ROOT\Installer\Dependencies\*\Dependents\<BundleProductCode>
         [Flags]
@@ -25,6 +25,7 @@ namespace MsiZapEx
             Good = ProviderKeyProductCodeMatch | HkcrDependencies | ArpPorviderKey | ArpUpgradeCodes | ARP
         }
 
+        public RegistryView RegistryView { get; private set; }
         public Guid BundleProductCode { get; private set; } = Guid.Empty;
         public List<Guid> BundleUpgradeCodes { get; private set; } = new List<Guid>();
         public string BundleProviderKey { get; private set; }
@@ -38,10 +39,18 @@ namespace MsiZapEx
         public static List<BundleInfo> FindByUpgradeCode(Guid bundleUpgradeCode)
         {
             List<BundleInfo> bundles = new List<BundleInfo>();
+            bundles.AddRange(FindByUpgradeCode(bundleUpgradeCode, RegistryView.Registry32));
+            bundles.AddRange(FindByUpgradeCode(bundleUpgradeCode, RegistryView.Registry64));
+            return bundles;
+        }
 
-            using (RegistryKey hklm32 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32))
+        private static List<BundleInfo> FindByUpgradeCode(Guid bundleUpgradeCode, RegistryView view)
+        {
+            List<BundleInfo> bundles = new List<BundleInfo>();
+
+            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view))
             {
-                using (RegistryKey hkUninstall = hklm32.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", false))
+                using (RegistryKey hkUninstall = hklm.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", false))
                 {
                     if (hkUninstall == null)
                     {
@@ -75,7 +84,7 @@ namespace MsiZapEx
                                 case RegistryValueKind.String:
                                     if (Guid.TryParse(hkSubkey.GetValue("BundleUpgradeCode")?.ToString(), out Guid bug) && bug.Equals(bundleUpgradeCode))
                                     {
-                                        BundleInfo bundle = new BundleInfo(bundleProductCode);
+                                        BundleInfo bundle = new BundleInfo(bundleProductCode, view);
                                         bundles.Add(bundle);
                                     }
                                     continue;
@@ -83,7 +92,7 @@ namespace MsiZapEx
                                 case RegistryValueKind.MultiString:
                                     if ((hkSubkey.GetValue("BundleUpgradeCode") is IEnumerable<string> bugs) && bugs.Any(uc => Guid.TryParse(uc, out Guid bug1) && bug1.Equals(bundleUpgradeCode)))
                                     {
-                                        BundleInfo bundle = new BundleInfo(bundleProductCode);
+                                        BundleInfo bundle = new BundleInfo(bundleProductCode, view);
                                         bundles.Add(bundle);
                                     }
                                     break;
@@ -101,7 +110,7 @@ namespace MsiZapEx
             {
                 if (!BundleProductCode.Equals(Guid.Empty))
                 {
-                    modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry32, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{BundleProductCode.ToString("B")}");
+                    modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{BundleProductCode.ToString("B")}");
 
                     foreach (string d in Dependents)
                     {
@@ -146,6 +155,7 @@ namespace MsiZapEx
             if (!BundleProductCode.Equals(Guid.Empty))
             {
                 Console.WriteLine($"\tBundleProductCode '{BundleProductCode}'");
+                Console.WriteLine($"\tBitness '{RegistryView}'");
             }
 
             if (!Status.HasFlag(StatusFlags.ArpUpgradeCodes))
@@ -194,9 +204,9 @@ namespace MsiZapEx
             }
         }
 
-        public BundleInfo(Guid bundleProductCode)
+        public BundleInfo(Guid bundleProductCode, RegistryView? view = null)
         {
-            ReadARP(bundleProductCode);
+            ReadARP(bundleProductCode, view);
         }
 
         private void ReadDependencies(string bundleProviderKey)
@@ -219,10 +229,6 @@ namespace MsiZapEx
 
                             if (Guid.TryParse(hkProviderKey.GetValue("")?.ToString(), out Guid bpc))
                             {
-                                if (BundleProductCode.Equals(Guid.Empty))
-                                {
-                                    ReadARP(bpc);
-                                }
                                 if (BundleProductCode.Equals(bpc))
                                 {
                                     Status |= StatusFlags.ProviderKeyProductCodeMatch;
@@ -262,18 +268,24 @@ namespace MsiZapEx
             }
         }
         
-        private void ReadARP(Guid bundleProductCode)
+        private void ReadARP(Guid bundleProductCode, RegistryView? view)
         {
             BundleProductCode = bundleProductCode;
-            using (RegistryKey hklm32 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32))
+            RegistryView implicitView = view ?? RegistryView.Registry32;
+            using (RegistryKey hklm32 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, implicitView))
             {
                 using (RegistryKey hkUninstall = hklm32.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{bundleProductCode.ToString("B")}", false))
                 {
                     if (hkUninstall == null)
                     {
+                        if (view == null)
+                        {
+                            ReadARP(bundleProductCode, RegistryView.Registry64);
+                        }
                         return;
                     }
                     Status |= StatusFlags.ARP;
+                    RegistryView = implicitView;
 
                     RegistryValueKind valueKind = hkUninstall.GetValueKind("BundleUpgradeCode");
                     switch (valueKind)
