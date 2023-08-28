@@ -1,9 +1,10 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using static MsiZapEx.ComponentInfo;
 using System.Linq;
+using System.Security.Principal;
 
 namespace MsiZapEx
 {
@@ -45,11 +46,34 @@ namespace MsiZapEx
         public StatusFlags Status { get; private set; } = StatusFlags.None;
         public bool IsShallow { get; private set; }
 
-        public ProductInfo(Guid productCode, bool includeComponents = true)
+        public bool MachineScope { get; private set; }
+        public bool UserScope => !MachineScope;
+        public string UserSID => MachineScope ? LocalSystemSID : CurrentUserSID;
+
+        internal readonly static string LocalSystemSID = "S-1-5-18";
+        private static string _currentUserSID = null;
+        internal static string CurrentUserSID
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_currentUserSID))
+                {
+                    return _currentUserSID;
+                }
+                _currentUserSID = WindowsIdentity.GetCurrent(false)?.User?.ToString();
+                if (string.IsNullOrEmpty(_currentUserSID))
+                {
+                    throw new Exception("Failed to get SID of current user");
+                }
+                return _currentUserSID;
+            }
+        }
+
+        public ProductInfo(Guid productCode, bool includeComponents = true, bool? machineScope = null)
         {
             string obfuscatedGuid = GuidEx.MsiObfuscate(productCode);
             IsShallow = !includeComponents;
-            Read(obfuscatedGuid);
+            Read(obfuscatedGuid, machineScope);
         }
 
         public void PrintState()
@@ -60,7 +84,7 @@ namespace MsiZapEx
                 return;
             }
 
-            Console.WriteLine($"Product '{ProductCode}': '{DisplayName}' v{DisplayVersion} Contains {Components.Count} components");
+            Console.WriteLine($"Product '{ProductCode}': '{DisplayName}' v{DisplayVersion}, Contains {Components.Count} components" + (MachineScope ? " in machine scope" : " in user scope"));
 
             if (!Status.HasFlag(StatusFlags.HkcrProduct))
             {
@@ -76,11 +100,11 @@ namespace MsiZapEx
             }
             if (!Status.HasFlag(StatusFlags.HklmFeatures))
             {
-                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\<ProductCode SUID>\Features");
+                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\<ProductCode SUID>\Features");
             }
             if (!Status.HasFlag(StatusFlags.HklmProduct))
             {
-                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\<ProductCode SUID>\InstallProperties");
+                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\<ProductCode SUID>\InstallProperties");
             }
 
             if (IsShallow)
@@ -122,10 +146,10 @@ namespace MsiZapEx
             }
         }
 
-        internal ProductInfo(string obfuscatedGuid, bool includeComponents = true)
+        internal ProductInfo(string obfuscatedGuid, bool includeComponents = true, bool? machineScope = null)
         {
             IsShallow = !includeComponents;
-            Read(obfuscatedGuid);
+            Read(obfuscatedGuid, machineScope);
         }
 
         /// <summary>
@@ -166,12 +190,31 @@ namespace MsiZapEx
             return products;
         }
 
-        private void Read(string obfuscatedGuid)
+        internal static bool ResolveScope(Guid productCode)
         {
-            ProductCode = GuidEx.MsiObfuscate(obfuscatedGuid);
+            string obfuscatedGuid = GuidEx.MsiObfuscate(productCode);
             using (RegistryKey hklm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
-                using (RegistryKey k = hklm64.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedGuid}\InstallProperties", false))
+                using (RegistryKey k = hklm64.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{LocalSystemSID}\Products\{obfuscatedGuid}\InstallProperties", false))
+                {
+                    if (k != null)
+                    {
+                        // Machine scope exists for this product
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private void Read(string obfuscatedGuid, bool? machineScope)
+        {
+            ProductCode = GuidEx.MsiObfuscate(obfuscatedGuid);
+            MachineScope = machineScope ?? ResolveScope(ProductCode);
+
+            using (RegistryKey hklm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                using (RegistryKey k = hklm64.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\{obfuscatedGuid}\InstallProperties", false))
                 {
                     if (k != null)
                     {
@@ -183,7 +226,7 @@ namespace MsiZapEx
                         InstallLocation = k.GetValue("InstallLocation")?.ToString();
                     }
                 }
-                using (RegistryKey k = hklm64.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedGuid}\Features", false))
+                using (RegistryKey k = hklm64.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\{obfuscatedGuid}\Features", false))
                 {
                     if (k != null)
                     {
@@ -214,9 +257,10 @@ namespace MsiZapEx
                 }
             }
 
-            using (RegistryKey hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
+            string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
+            using (RegistryKey hkmu = RegistryKey.OpenBaseKey(MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser, RegistryView.Registry64))
             {
-                using (RegistryKey k = hkcr.OpenSubKey($@"Installer\Products\{obfuscatedGuid}", false))
+                using (RegistryKey k = hkmu.OpenSubKey($@"{keyBase}\Installer\Products\{obfuscatedGuid}", false))
                 {
                     if (k != null)
                     {
@@ -225,7 +269,7 @@ namespace MsiZapEx
                 }
 
                 Features = new List<string>();
-                using (RegistryKey k = hkcr.OpenSubKey($@"Installer\Features\{obfuscatedGuid}", false))
+                using (RegistryKey k = hkmu.OpenSubKey($@"{keyBase}\Installer\Features\{obfuscatedGuid}", false))
                 {
                     if (k != null)
                     {
@@ -246,7 +290,7 @@ namespace MsiZapEx
                 }
 
                 Dependants = new List<string>();
-                using (RegistryKey k = hkcr.OpenSubKey(@"Installer\Dependencies", false))
+                using (RegistryKey k = hkmu.OpenSubKey(@"Software\Classes\Installer\Dependencies", false))
                 {
                     if (k != null)
                     {
@@ -274,7 +318,7 @@ namespace MsiZapEx
             }
             else
             {
-                Components = ComponentInfo.GetComponents(ProductCode);
+                Components = ComponentInfo.GetComponents(ProductCode, MachineScope);
                 if (Components.Count > 0)
                 {
                     Status |= StatusFlags.Components;
@@ -304,17 +348,20 @@ namespace MsiZapEx
             }
 
             string obfuscatedProductCode = GuidEx.MsiObfuscate(ProductCode);
-            modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{obfuscatedProductCode}");
+            modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\{obfuscatedProductCode}");
             modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{ProductCode.ToString("B")}");
-            modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Products\{obfuscatedProductCode}");
-            modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Features\{obfuscatedProductCode}");
+
+            string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
+            RegistryHive hiveBase = MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
+            modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\Products\{obfuscatedProductCode}");
+            modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\Features\{obfuscatedProductCode}");
 
             // Dependencies
-            modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{ProductCode.ToString("B")}");
+            modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"SOFTWARE\Classes\Installer\Dependencies\{ProductCode.ToString("B")}");
 
             foreach (string d in Dependants)
             {
-                modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{d}\Dependents\{ProductCode.ToString("B")}");
+                modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"SOFTWARE\Classes\Installer\Dependencies\{d}\Dependents\{ProductCode.ToString("B")}");
             }
 
             //TODO Use FileSystemModifier

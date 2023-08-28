@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,6 +33,8 @@ namespace MsiZapEx
             public bool KeyPathExists { get; private set; }
         }
 
+        public bool MachineScope { get; private set; }
+        public string UserSID => MachineScope ? ProductInfo.LocalSystemSID : ProductInfo.CurrentUserSID;
         public Guid ComponentCode { get; private set; }
         public StatusFlags Status { get; private set; } = StatusFlags.None;
         public List<ProductKeyPath> ProductsKeyPath { get; } = new List<ProductKeyPath>();
@@ -47,7 +49,7 @@ namespace MsiZapEx
 
             using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
-                using (RegistryKey k = hklm.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components", false))
+                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{ProductInfo.LocalSystemSID}\Components", false))
                 {
                     if (k == null)
                     {
@@ -64,10 +66,32 @@ namespace MsiZapEx
                         }
 
                         Guid componentCode = GuidEx.MsiObfuscate(c);
-                        ComponentInfo ci = _components.FirstOrDefault(cc => cc.ComponentCode.Equals(componentCode));
+                        ComponentInfo ci = _components.FirstOrDefault(cc => cc.MachineScope && cc.ComponentCode.Equals(componentCode));
                         if (ci == null)
                         {
-                            ci = new ComponentInfo(c);
+                            ci = new ComponentInfo(c, true);
+                        }
+                    }
+                }
+                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{ProductInfo.CurrentUserSID}\Components", false))
+                {
+                    if (k != null)
+                    {
+                        string[] componentCodes = k.GetSubKeyNames();
+                        foreach (string c in componentCodes)
+                        {
+                            // Ignore default value
+                            if (string.IsNullOrWhiteSpace(c) || c.Equals("@") || !Guid.TryParse(c, out Guid id) || id.Equals(Guid.Empty))
+                            {
+                                continue;
+                            }
+
+                            Guid componentCode = GuidEx.MsiObfuscate(c);
+                            ComponentInfo ci = _components.FirstOrDefault(cc => !cc.MachineScope && cc.ComponentCode.Equals(componentCode));
+                            if (ci == null)
+                            {
+                                ci = new ComponentInfo(c, false);
+                            }
                         }
                     }
                 }
@@ -75,23 +99,41 @@ namespace MsiZapEx
             return _components;
         }
 
-        internal static List<ComponentInfo> GetComponents(Guid productCode)
+        internal static List<ComponentInfo> GetComponents(Guid productCode, bool machineContext)
         {
             GetAllComponents();
             List<ComponentInfo> components = new List<ComponentInfo>();
-            components.AddRange(_components.FindAll(ci => ci.ProductsKeyPath.Any(p => p.ProductCode.Equals(productCode))));
-            return components; 
+            components.AddRange(_components.FindAll(ci => ci.MachineScope == machineContext && ci.ProductsKeyPath.Any(p => p.ProductCode.Equals(productCode))));
+            return components;
         }
 
-        public ComponentInfo(Guid componentCode)
-            : this(componentCode.MsiObfuscate())
+        internal static bool ResolveScope(Guid componentCode)
+        {
+            string obfuscatedGuid = GuidEx.MsiObfuscate(componentCode);
+            using (RegistryKey hklm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                using (RegistryKey k = hklm64.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{ProductInfo.LocalSystemSID}\Components\{obfuscatedGuid}", false))
+                {
+                    if (k != null)
+                    {
+                        // Machine scope exists for this component
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public ComponentInfo(Guid componentCode, bool? machineScope = null)
+            : this(componentCode.MsiObfuscate(), machineScope)
         {
         }
 
-        internal ComponentInfo(string obfuscatedGuid)
+        internal ComponentInfo(string obfuscatedGuid, bool? machineScope = null)
         {
             Guid componentCode = GuidEx.MsiObfuscate(obfuscatedGuid);
-            ComponentInfo ci = _components.FirstOrDefault(c => c.ComponentCode.Equals(componentCode));
+            this.MachineScope = machineScope ?? ResolveScope(componentCode);
+            ComponentInfo ci = _components.FirstOrDefault(c => c.MachineScope == machineScope && c.ComponentCode.Equals(componentCode));
             if (ci != null)
             {
                 this.Status = ci.Status;
@@ -102,7 +144,7 @@ namespace MsiZapEx
 
             using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
-                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components\{obfuscatedGuid}", false))
+                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Components\{obfuscatedGuid}", false))
                 {
                     if (k != null)
                     {
@@ -243,7 +285,7 @@ namespace MsiZapEx
             string obfuscatedComponentCode = GuidEx.MsiObfuscate(ComponentCode);
             string obfuscatedProductCode = GuidEx.MsiObfuscate(productCode);
 
-            string subkeyName = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components\{obfuscatedComponentCode}";
+            string subkeyName = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Components\{obfuscatedComponentCode}";
             modifier.DeferDeleteValue(RegistryHive.LocalMachine, RegistryView.Registry64, subkeyName, obfuscatedProductCode);
             modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $"{subkeyName}\\{obfuscatedProductCode}");
             modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, subkeyName, k => ((k.SubKeyCount == 0) && (k.GetValueNames()?.Any(v => !string.IsNullOrEmpty(v) && !v.Equals("@")) != true)));
