@@ -181,7 +181,7 @@ namespace MsiZapEx
                     ProductInfo pi = products.FirstOrDefault(p => p.ProductCode.Equals(keyPath.ProductCode));
                     if (pi == null)
                     {
-                        pi = new ProductInfo(keyPath.ProductCode);
+                        pi = new ProductInfo(keyPath.ProductCode, ci.MachineScope);
                         products.Add(pi);
                     }
                 }

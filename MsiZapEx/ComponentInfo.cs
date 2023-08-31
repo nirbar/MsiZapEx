@@ -103,7 +103,7 @@ namespace MsiZapEx
         {
             GetAllComponents();
             List<ComponentInfo> components = new List<ComponentInfo>();
-            components.AddRange(_components.FindAll(ci => ci.MachineScope == machineContext && ci.ProductsKeyPath.Any(p => p.ProductCode.Equals(productCode))));
+            components.AddRange(_components.FindAll(ci => ci.ProductsKeyPath.Any(p => p.ProductCode.Equals(productCode))));
             return components;
         }
 
