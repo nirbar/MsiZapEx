@@ -88,23 +88,23 @@ namespace MsiZapEx
 
             if (!Status.HasFlag(StatusFlags.HkcrProduct))
             {
-                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\Products");
+                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\Products'");
             }
             if (!Status.HasFlag(StatusFlags.HkcrFeatures))
             {
-                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\Features");
+                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\Features'");
             }
             if (!Status.HasFlag(StatusFlags.ARP))
             {
-                Console.WriteLine($@"{'\t'}Missing Uninstall key under 'Software\Microsoft\Windows\CurrentVersion\Uninstall");
+                Console.WriteLine($@"{'\t'}Missing Uninstall key under 'Software\Microsoft\Windows\CurrentVersion\Uninstall'");
             }
             if (!Status.HasFlag(StatusFlags.HklmFeatures))
             {
-                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\<ProductCode SUID>\Features");
+                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\<ProductCode SUID>\Features'");
             }
             if (!Status.HasFlag(StatusFlags.HklmProduct))
             {
-                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\<ProductCode SUID>\InstallProperties");
+                Console.WriteLine($@"{'\t'}Missing HKLM key under 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\<ProductCode SUID>\InstallProperties'");
             }
 
             if (IsShallow)

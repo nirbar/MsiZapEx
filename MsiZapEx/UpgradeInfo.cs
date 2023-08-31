@@ -28,9 +28,31 @@ namespace MsiZapEx
         public List<ProductInfo> RelatedProducts { get; private set; }
         public StatusFlags Status { get; private set; } = StatusFlags.None;
 
-        public UpgradeInfo(Guid upgradeCode, bool shallow = false)
+        public bool MachineScope { get; private set; }
+        public bool UserScope => !MachineScope;
+        public string UserSID => MachineScope ? ProductInfo.LocalSystemSID : ProductInfo.CurrentUserSID;
+
+        internal static bool ResolveScope(Guid productCode)
+        {
+            string obfuscatedGuid = GuidEx.MsiObfuscate(productCode);
+            using (RegistryKey hklm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                using (RegistryKey k = hklm64.OpenSubKey($@"SOFTWARE\Classes\Installer\UpgradeCodes\{obfuscatedGuid}", false))
+                {
+                    if (k != null)
+                    {
+                        // Machine scope exists for this upgrade-code
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public UpgradeInfo(Guid upgradeCode, bool shallow = false, bool? machineScope = null)
         {
             UpgradeCode = upgradeCode;
+            MachineScope = machineScope ?? ResolveScope(upgradeCode);
             Enumerate(shallow);
         }
 
@@ -45,11 +67,11 @@ namespace MsiZapEx
             Console.WriteLine($"UpgradeCode '{UpgradeCode}', {RelatedProducts.Count} products");
             if (!Status.HasFlag(StatusFlags.HkcrUpgarde))
             {
-                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\UpgradeCodes");
+                Console.WriteLine($@"{'\t'}Missing HKCR key under 'Installer\UpgradeCodes'");
             }
             if (!Status.HasFlag(StatusFlags.HklmHkcrProductsMatch))
             {
-                Console.WriteLine($@"{'\t'}HKCR key 'Installer\UpgradeCodes and HKLM key 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes' have mismatching products");
+                Console.WriteLine($@"{'\t'}HKCR key 'Installer\UpgradeCodes' and HKLM key 'SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes' have mismatching products");
             }
             if (!Status.HasFlag(StatusFlags.HklmUpgarde))
             {
@@ -112,9 +134,10 @@ namespace MsiZapEx
             bool hkcrHklmMatch = true;
             using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
-                using (RegistryKey hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
+                string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
+                using (RegistryKey hkmu = RegistryKey.OpenBaseKey(MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser, RegistryView.Registry64))
                 {
-                    using (RegistryKey ck = hkcr.OpenSubKey($@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}", false))
+                    using (RegistryKey ck = hkmu.OpenSubKey($@"{keyBase}\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", false))
                     {
                         using (RegistryKey mk = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", false))
                         {
@@ -210,12 +233,18 @@ namespace MsiZapEx
                 if (RelatedProducts.Count > 1)
                 {
                     modifier.DeferDeleteValue(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
-                    modifier.DeferDeleteValue(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
+
+                    string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
+                    RegistryHive hiveBase = MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
+                    modifier.DeferDeleteValue(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
                 }
                 else
                 {
                     modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
-                    modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
+
+                    string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
+                    RegistryHive hiveBase = MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
+                    modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
                 }
             }
         }

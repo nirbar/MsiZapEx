@@ -25,6 +25,8 @@ namespace MsiZapEx
             Good = ProviderKeyProductCodeMatch | HkcrDependencies | ArpPorviderKey | ArpUpgradeCodes | ARP
         }
 
+        //TODO Support per-user bundles
+
         public RegistryView RegistryView { get; private set; }
         public Guid BundleProductCode { get; private set; } = Guid.Empty;
         public List<Guid> BundleUpgradeCodes { get; private set; } = new List<Guid>();
