@@ -8,6 +8,9 @@ namespace MsiZapEx
     {
         internal static Settings Instance { get; set; }
 
+        [Option("obfuscate-guid", Required = false, HelpText = "Print the obfuscated form of the UUID", Group = "codes")]
+        public string ObfuscateGuid { get; set; }
+
         [Option("bundle-upgrade-code", Required = false, HelpText = "Detect bundles by UpgradeCode", Group = "codes")]
         public string BundleUpgradeCode { get; set; }
 

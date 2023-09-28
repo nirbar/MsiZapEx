@@ -153,6 +153,13 @@ namespace MsiZapEx
                         }
                     }
                 }
+                if (!string.IsNullOrEmpty(Settings.Instance.ObfuscateGuid))
+                {
+                    Guid obfuscated = GuidEx.MsiObfuscate(Settings.Instance.ObfuscateGuid);
+                    Console.WriteLine($"Supplied UUID: {Settings.Instance.ObfuscateGuid}");
+                    Console.WriteLine($"Obfuscated UUID (N format): {obfuscated.ToString("N")}");
+                    Console.WriteLine($"Obfuscated UUID (B format): {obfuscated.ToString("B")}");
+                }
             }
             catch (Exception ex)
             {
