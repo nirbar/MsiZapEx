@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace MsiZapEx
 {
@@ -40,43 +41,31 @@ namespace MsiZapEx
         public List<ProductKeyPath> ProductsKeyPath { get; } = new List<ProductKeyPath>();
         private static List<ComponentInfo> _components = new List<ComponentInfo>();
 
+        private static ManualResetEventSlim _componentsLock = new ManualResetEventSlim(false);
         internal static List<ComponentInfo> GetAllComponents()
         {
-            if (_components.Count > 0)
+            if (_componentsLock.IsSet)
             {
                 return _components;
             }
 
-            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            try
             {
-                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{ProductInfo.LocalSystemSID}\Components", false))
+                _componentsLock.Set();
+                if (_components.Count > 0)
                 {
-                    if (k == null)
-                    {
-                        throw new FileNotFoundException();
-                    }
-
-                    string[] componentCodes = k.GetSubKeyNames();
-                    foreach (string c in componentCodes)
-                    {
-                        // Ignore default value
-                        if (string.IsNullOrWhiteSpace(c) || c.Equals("@") || !Guid.TryParse(c, out Guid id) || id.Equals(Guid.Empty))
-                        {
-                            continue;
-                        }
-
-                        Guid componentCode = GuidEx.MsiObfuscate(c);
-                        ComponentInfo ci = _components.FirstOrDefault(cc => cc.MachineScope && cc.ComponentCode.Equals(componentCode));
-                        if (ci == null)
-                        {
-                            ci = new ComponentInfo(c, true);
-                        }
-                    }
+                    return _components;
                 }
-                using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{ProductInfo.CurrentUserSID}\Components", false))
+
+                using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
                 {
-                    if (k != null)
+                    using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{ProductInfo.LocalSystemSID}\Components", false))
                     {
+                        if (k == null)
+                        {
+                            throw new FileNotFoundException();
+                        }
+
                         string[] componentCodes = k.GetSubKeyNames();
                         foreach (string c in componentCodes)
                         {
@@ -87,14 +76,40 @@ namespace MsiZapEx
                             }
 
                             Guid componentCode = GuidEx.MsiObfuscate(c);
-                            ComponentInfo ci = _components.FirstOrDefault(cc => !cc.MachineScope && cc.ComponentCode.Equals(componentCode));
+                            ComponentInfo ci = _components.FirstOrDefault(cc => cc.MachineScope && cc.ComponentCode.Equals(componentCode));
                             if (ci == null)
                             {
-                                ci = new ComponentInfo(c, false);
+                                ci = new ComponentInfo(c, true);
+                            }
+                        }
+                    }
+                    using (RegistryKey k = hklm.OpenSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{ProductInfo.CurrentUserSID}\Components", false))
+                    {
+                        if (k != null)
+                        {
+                            string[] componentCodes = k.GetSubKeyNames();
+                            foreach (string c in componentCodes)
+                            {
+                                // Ignore default value
+                                if (string.IsNullOrWhiteSpace(c) || c.Equals("@") || !Guid.TryParse(c, out Guid id) || id.Equals(Guid.Empty))
+                                {
+                                    continue;
+                                }
+
+                                Guid componentCode = GuidEx.MsiObfuscate(c);
+                                ComponentInfo ci = _components.FirstOrDefault(cc => !cc.MachineScope && cc.ComponentCode.Equals(componentCode));
+                                if (ci == null)
+                                {
+                                    ci = new ComponentInfo(c, false);
+                                }
                             }
                         }
                     }
                 }
+            }
+            finally
+            {
+                _componentsLock.Reset();
             }
             return _components;
         }
@@ -131,13 +146,18 @@ namespace MsiZapEx
 
         internal ComponentInfo(string obfuscatedGuid, bool? machineScope = null)
         {
-            Guid componentCode = GuidEx.MsiObfuscate(obfuscatedGuid);
-            this.MachineScope = machineScope ?? ResolveScope(componentCode);
-            ComponentInfo ci = _components.FirstOrDefault(c => c.MachineScope == machineScope && c.ComponentCode.Equals(componentCode));
+            GetAllComponents();
+
+            ComponentCode = GuidEx.MsiObfuscate(obfuscatedGuid);
+            if (machineScope == null)
+            {
+                machineScope = ResolveScope(ComponentCode);
+            }
+            this.MachineScope = machineScope.Value;
+            ComponentInfo ci = _components.FirstOrDefault(c => c.MachineScope == machineScope && c.ComponentCode.Equals(ComponentCode));
             if (ci != null)
             {
                 this.Status = ci.Status;
-                this.ComponentCode = ci.ComponentCode;
                 this.ProductsKeyPath.AddRange(ci.ProductsKeyPath);
                 return;
             }
@@ -183,6 +203,7 @@ namespace MsiZapEx
             if (ProductsKeyPath.Count == 0)
             {
                 Console.WriteLine($"Component '{ComponentCode}' is not related to any product");
+                return;
             }
 
             Console.WriteLine($"Component '{ComponentCode}' belongs to {ProductsKeyPath.Count} products");

@@ -143,6 +143,7 @@ namespace MsiZapEx
             if (Settings.Instance.Verbose)
             {
                 Console.WriteLine($"\tFeatures: {Features.Aggregate((a, c) => $"{a}, {c}")}");
+                Console.WriteLine($"\tLocalPackage: {LocalPackage}");
             }
         }
 
