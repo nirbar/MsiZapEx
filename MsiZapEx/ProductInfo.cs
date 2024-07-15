@@ -284,7 +284,7 @@ namespace MsiZapEx
                                 if (!string.IsNullOrEmpty(f) && !f.Equals("@"))
                                 {
                                     string v = k.GetValue(f) as string;
-                                    if ((v != null) && ((v.Length == 0) || char.IsLetter(v[0])))
+                                    if ((v != null) && ((v.Length == 0) || char.IsLetter(v[0]) || v[0].Equals('_')))
                                     {
                                         Features.Add(f);
                                     }
