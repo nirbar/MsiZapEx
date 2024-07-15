@@ -319,7 +319,7 @@ namespace MsiZapEx
             }
             else
             {
-                Components = ComponentInfo.GetComponents(ProductCode, MachineScope);
+                Components = ComponentInfo.GetComponents(ProductCode);
                 if (Components.Count > 0)
                 {
                     Status |= StatusFlags.Components;

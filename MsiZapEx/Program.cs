@@ -137,6 +137,21 @@ namespace MsiZapEx
                     ComponentInfo component = new ComponentInfo(componentCode);
                     component.PrintProducts();
                 }
+                if (!string.IsNullOrEmpty(Settings.Instance.KeyPath))
+                {
+                    List<ComponentInfo> components = ComponentInfo.GetByKeyPath(Settings.Instance.KeyPath);
+                    if (components != null && components.Count > 0)
+                    {
+                        foreach (ComponentInfo component in components)
+                        {
+                            component.PrintProducts();
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"No components found with key path '{Settings.Instance.KeyPath}'");
+                    }
+                }
                 if (Settings.Instance.DetectOrphanProducts)
                 {
                     List<ProductInfo> orphan = ProductInfo.GetOrphanProducts();

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml.Linq;
 
 namespace MsiZapEx
 {
@@ -114,11 +115,29 @@ namespace MsiZapEx
             return _components;
         }
 
-        internal static List<ComponentInfo> GetComponents(Guid productCode, bool machineContext)
+        internal static List<ComponentInfo> GetComponents(Guid productCode)
         {
             GetAllComponents();
             List<ComponentInfo> components = new List<ComponentInfo>();
             components.AddRange(_components.FindAll(ci => ci.ProductsKeyPath.Any(p => p.ProductCode.Equals(productCode))));
+            return components;
+        }
+
+        internal static List<ComponentInfo> GetByKeyPath(string keyPath)
+        {
+            GetAllComponents();
+            keyPath = keyPath.Replace("?", "");
+            List<ComponentInfo> components = new List<ComponentInfo>();
+            try
+            {
+                if (Path.IsPathRooted(keyPath))
+                {
+                    keyPath = Path.GetFullPath(keyPath);
+                }
+            }
+            catch { }
+
+            components.AddRange(_components.FindAll(ci => ci.ProductsKeyPath.Any(p => p.KeyPath.Replace("?", "").Equals(keyPath, StringComparison.InvariantCultureIgnoreCase))));
             return components;
         }
 
@@ -244,6 +263,7 @@ namespace MsiZapEx
             {
                 return true;
             }
+            keyPath = keyPath.Replace("?", "");
 
             Match regMatch = registryKeyPath_.Match(keyPath);
             if (regMatch.Success)
@@ -252,7 +272,7 @@ namespace MsiZapEx
                 if (int.TryParse(root, out int kr))
                 {
                     RegistryHive hive;
-                    RegistryView view = (kr > 20) ? RegistryView.Registry64 : RegistryView.Registry32;
+                    RegistryView view = (kr >= 20) ? RegistryView.Registry64 : RegistryView.Registry32;
                     switch (kr % 10)
                     {
                         case 0:
@@ -272,6 +292,17 @@ namespace MsiZapEx
                     }
 
                     string path = regMatch.Groups["path"].Value;
+                    if (path.EndsWith($"{Path.DirectorySeparatorChar}") || path.EndsWith($"{Path.AltDirectorySeparatorChar}"))
+                    {
+                        using (RegistryKey rk = RegistryKey.OpenBaseKey(hive, view))
+                        {
+                            using (RegistryKey hk = rk.OpenSubKey(path, false))
+                            {
+                                return (hk != null);
+                            }
+                        }
+                    }
+
                     string key = Path.GetDirectoryName(path);
                     string name = Path.GetFileName(path);
                     using (RegistryKey rk = RegistryKey.OpenBaseKey(hive, view))
