@@ -283,7 +283,11 @@ namespace MsiZapEx
                             {
                                 if (!string.IsNullOrEmpty(f) && !f.Equals("@"))
                                 {
-                                    Features.Add(f);
+                                    string v = k.GetValue(f) as string;
+                                    if ((v != null) && ((v.Length == 0) || char.IsLetter(v[0])))
+                                    {
+                                        Features.Add(f);
+                                    }
                                 }
                             }
                         }
