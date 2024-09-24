@@ -7,6 +7,11 @@ on:
         required: true
         default: false
         type: boolean
+      publish_release:
+        description: 'Publish release?'
+        required: true
+        default: false
+        type: boolean
       version:
         description: 'Build & package version'
         required: true
@@ -30,8 +35,8 @@ jobs:
         with:
           name: MsiZapEx
           path: |
-            build\net40\MsiZapEx\Release\bin\*.exe
-            build\net40\MsiZapEx\Release\bin\*.dll
+            build/net40/MsiZapEx/Release/bin/*.exe
+            build/net40/MsiZapEx/Release/bin/*.dll
 
       - name: Publish nuget packages to github and nuget.org
         if: ${{ github.event.inputs.publish_nuget == 'true' }}
@@ -43,12 +48,12 @@ jobs:
 
       - name: Publish release
         uses: softprops/action-gh-release@v2.0.8
-        if: ${{ github.event.inputs.publish_nuget == 'true' }}
+        if: ${{ github.event.inputs.publish_release == 'true' }}
         with:
           prerelease: false
           generate_release_notes: true
           tag_name: ${{ env.FULL_VERSION }}
           files: |
             build\MsiZapEx\Release\bin\MsiZapEx.${{ env.FULL_VERSION }}.nupkg
-            build\net40\MsiZapEx\Release\bin\MsiZapEx.exe
-            build\net40\MsiZapEx\Release\bin\CommandLine.dll
+            build/net40/MsiZapEx/Release/bin/MsiZapEx.exe
+            build/net40/MsiZapEx/Release/bin/CommandLine.dll
