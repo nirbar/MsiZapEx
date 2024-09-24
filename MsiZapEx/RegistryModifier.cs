@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -170,7 +170,7 @@ namespace MsiZapEx
                         {
                             using (RegistryKey k = root.OpenSubKey(delValue.key, true))
                             {
-                                k.DeleteValue(delValue.name);
+                                k.DeleteValue(delValue.name, false);
                             }
                         }
                     }
@@ -202,7 +202,7 @@ namespace MsiZapEx
 
                         if (Settings.Instance?.DryRun != true)
                         {
-                            root.DeleteSubKeyTree(delKey.key);
+                            root.DeleteSubKeyTree(delKey.key, false);
                         }
                     }
                 }

@@ -1,0 +1,21 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="TestPackage" Manufacturer="TODO Manufacturer" Version="1.0.0.0" UpgradeCode="270775df-83c8-42fa-b78f-4713cb37d84d">
+    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+
+    <UIRef Id="WixUI_FeatureTree_$(sys.BUILDARCHSHORT)"/>
+    <Feature Id="ExampleComponents1">
+      <ComponentGroupRef Id="ExampleComponents1" />
+
+      <Feature Id="ExampleComponents2">
+        <ComponentGroupRef Id="ExampleComponents2" />
+      </Feature>
+
+      <Feature Id="ExampleComponents3">
+        <ComponentGroupRef Id="ExampleComponents3" />
+        <Feature Id="ExampleComponents4">
+          <ComponentGroupRef Id="ExampleComponents4" />
+        </Feature>
+      </Feature>
+    </Feature>
+  </Package>
+</Wix>

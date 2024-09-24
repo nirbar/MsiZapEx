@@ -10,14 +10,14 @@ on:
       version:
         description: 'Build & package version'
         required: true
-        default: 0.2.2
+        default: 0.2.3
         type: string
 jobs:
   Build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3.3.0
-      - uses: microsoft/setup-msbuild@v1.0.2
+      - uses: actions/checkout@v4.1.7
+      - uses: microsoft/setup-msbuild@v2
 
       - name: Set version
         run: Add-Content -Path $env:GITHUB_ENV -Value "FULL_VERSION=${{ github.event.inputs.version }}.${{ github.run_number }}"
@@ -26,7 +26,7 @@ jobs:
         run: dotnet build MsiZapEx.sln -p:Configuration=Release -p:Version=${{ env.FULL_VERSION }}
 
       - name: Publish artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3.0.0
         with:
           name: MsiZapEx
           path: |
@@ -42,7 +42,7 @@ jobs:
           dotnet nuget push build\MsiZapEx\Release\bin\MsiZapEx.${{ env.FULL_VERSION }}.nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
 
       - name: Publish release
-        uses: softprops/action-gh-release@v0.1.14
+        uses: softprops/action-gh-release@v2.0.8
         if: ${{ github.event.inputs.publish_nuget == 'true' }}
         with:
           prerelease: false

@@ -1,0 +1,24 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <ComponentGroup Id="ExampleComponents1" Directory="INSTALLFOLDER">
+      <Component>
+        <File Source="ExampleComponents.wxs" />
+      </Component>
+    </ComponentGroup>
+    <ComponentGroup Id="ExampleComponents2" Directory="INSTALLFOLDER">
+      <Component>
+        <File Source="ExampleComponents.wxs" Name="ExampleComponents2.wxs" />
+      </Component>
+    </ComponentGroup>
+    <ComponentGroup Id="ExampleComponents3" Directory="INSTALLFOLDER">
+      <Component>
+        <File Source="ExampleComponents.wxs" Name="ExampleComponents3.wxs"/>
+      </Component>
+    </ComponentGroup>
+    <ComponentGroup Id="ExampleComponents4" Directory="INSTALLFOLDER">
+      <Component>
+        <File Source="ExampleComponents.wxs" Name="ExampleComponents4.wxs"/>
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
