@@ -108,36 +108,36 @@ namespace MsiZapEx
 
         public void Prune()
         {
-            using (RegistryModifier modifier = new RegistryModifier())
+            using (RegistryModifier registryModifier = new RegistryModifier())
             {
-                if (!BundleProductCode.Equals(Guid.Empty))
+                using (FileSystemModifier fileSystemModifier = new FileSystemModifier())
                 {
-                    modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{BundleProductCode.ToString("B")}");
-
-                    foreach (string d in Dependents)
-                    {
-                        modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{d}\Dependents\{BundleProductCode.ToString("B")}");
-                    }
+                    Prune(fileSystemModifier, registryModifier);
                 }
-                if (!string.IsNullOrEmpty(BundleProviderKey))
+            }
+        }
+
+        internal void Prune(FileSystemModifier fileSystemModifier, RegistryModifier registryModifier)
+        {
+            if (!BundleProductCode.Equals(Guid.Empty))
+            {
+                registryModifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{BundleProductCode.ToString("B")}");
+
+                foreach (string d in Dependents)
                 {
-                    modifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{BundleProviderKey}");
+                    registryModifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{d}\Dependents\{BundleProductCode.ToString("B")}");
                 }
+            }
+            if (!string.IsNullOrEmpty(BundleProviderKey))
+            {
+                registryModifier.DeferDeleteKey(RegistryHive.ClassesRoot, RegistryView.Registry64, $@"Installer\Dependencies\{BundleProviderKey}");
+            }
 
-                // Remove bundle from PendingFileRenameOperations
-                if (!string.IsNullOrEmpty(BundleCachePath))
-                {
-                    //TODO Use FileSystemModifier
-                    try
-                    {
-                        File.Delete(BundleCachePath);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                    modifier.DeferRemoveFromPendingOperations(BundleCachePath);
-                }
+            // Remove bundle from PendingFileRenameOperations
+            if (!string.IsNullOrEmpty(BundleCachePath))
+            {
+                registryModifier.DeferRemoveFromPendingOperations(BundleCachePath);
+                fileSystemModifier.DeferDeleteFolder(Path.GetDirectoryName(BundleCachePath));
             }
         }
 

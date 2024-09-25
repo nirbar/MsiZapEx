@@ -223,29 +223,37 @@ namespace MsiZapEx
                 throw new FileNotFoundException();
             }
 
-            using (RegistryModifier modifier = new RegistryModifier())
+            using (RegistryModifier registryModifier = new RegistryModifier())
             {
-                product.Prune(modifier);
-
-                string obfuscatedUpgradeCode = GuidEx.MsiObfuscate(UpgradeCode);
-                string obfuscatedProductCode = GuidEx.MsiObfuscate(product.ProductCode);
-
-                if (RelatedProducts.Count > 1)
+                using (FileSystemModifier fileSystemModifier = new FileSystemModifier())
                 {
-                    modifier.DeferDeleteValue(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
-
-                    string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
-                    RegistryHive hiveBase = MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
-                    modifier.DeferDeleteValue(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
+                    Prune(product, fileSystemModifier, registryModifier);
                 }
-                else
-                {
-                    modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
+            }
+        }
 
-                    string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
-                    RegistryHive hiveBase = MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
-                    modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
-                }
+        internal void Prune(ProductInfo product, FileSystemModifier fileSystemModifier, RegistryModifier registryModifier)
+        {
+            product.Prune(fileSystemModifier, registryModifier);
+
+            string obfuscatedUpgradeCode = GuidEx.MsiObfuscate(UpgradeCode);
+            string obfuscatedProductCode = GuidEx.MsiObfuscate(product.ProductCode);
+
+            if (RelatedProducts.Count > 1)
+            {
+                registryModifier.DeferDeleteValue(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
+
+                string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
+                RegistryHive hiveBase = MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
+                registryModifier.DeferDeleteValue(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\UpgradeCodes\{obfuscatedUpgradeCode}", obfuscatedProductCode);
+            }
+            else
+            {
+                registryModifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
+
+                string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
+                RegistryHive hiveBase = MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
+                registryModifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\UpgradeCodes\{obfuscatedUpgradeCode}");
             }
         }
     }

@@ -341,45 +341,37 @@ namespace MsiZapEx
             }
         }
 
-        internal void Prune(RegistryModifier modifier)
+        internal void Prune(FileSystemModifier fileSystemModifier, RegistryModifier registryModifier)
         {
             foreach (ComponentInfo c in Components)
             {
-                c.Prune(ProductCode, modifier);
+                c.Prune(ProductCode, registryModifier);
             }
             foreach (PatchInfo p in Patches)
             {
-                p.Prune(ProductCode, modifier);
+                p.Prune(ProductCode, registryModifier);
             }
 
             string obfuscatedProductCode = GuidEx.MsiObfuscate(ProductCode);
-            modifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\{obfuscatedProductCode}");
-            modifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{ProductCode.ToString("B")}");
+            registryModifier.DeferDeleteKey(RegistryHive.LocalMachine, RegistryView.Registry64, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{UserSID}\Products\{obfuscatedProductCode}");
+            registryModifier.DeferDeleteKey(RegistryHive.LocalMachine, View, $@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{ProductCode.ToString("B")}");
 
             string keyBase = MachineScope ? @"SOFTWARE\Classes" : @"Software\Microsoft";
             RegistryHive hiveBase = MachineScope ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
-            modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\Products\{obfuscatedProductCode}");
-            modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\Features\{obfuscatedProductCode}");
+            registryModifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\Products\{obfuscatedProductCode}");
+            registryModifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"{keyBase}\Installer\Features\{obfuscatedProductCode}");
 
             // Dependencies
-            modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"SOFTWARE\Classes\Installer\Dependencies\{ProductCode.ToString("B")}");
+            registryModifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"SOFTWARE\Classes\Installer\Dependencies\{ProductCode.ToString("B")}");
 
             foreach (string d in Dependants)
             {
-                modifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"SOFTWARE\Classes\Installer\Dependencies\{d}\Dependents\{ProductCode.ToString("B")}");
+                registryModifier.DeferDeleteKey(hiveBase, RegistryView.Registry64, $@"SOFTWARE\Classes\Installer\Dependencies\{d}\Dependents\{ProductCode.ToString("B")}");
             }
 
-            //TODO Use FileSystemModifier
             if (!string.IsNullOrEmpty(LocalPackage))
             {
-                try
-                {
-                    File.Delete(LocalPackage);
-                }
-                catch (Exception ex)
-                {
-
-                }
+                fileSystemModifier.DeferDeleteFile(LocalPackage);
             }
         }
     }
