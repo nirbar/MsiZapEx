@@ -1,0 +1,16 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+  <Bundle Name="TestBundle" Manufacturer="Panel::Software" Version="$(FullVersion)" UpgradeCode="d01a7a13-e3f1-457f-ba5a-2a8819942bfd">
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication LicenseUrl="https://www.example.com/license" Theme="hyperlinkLicense" />
+    </BootstrapperApplication>
+
+    <Variable Name="InstallFolder" Value="[ProgramFiles6432Folder]\!(bind.packageName.TestPackage.msi)" Type="formatted" Persisted="yes"/>
+
+    <Chain>
+      <MsiPackage SourceFile="$(TestPackage.TargetPath)">
+        <MsiProperty Name="INSTALLFOLDER" Value="[InstallFolder]"/>
+      </MsiPackage>
+    </Chain>
+
+  </Bundle>
+</Wix>

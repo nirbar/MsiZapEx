@@ -1,10 +1,15 @@
 ﻿<Project Sdk="WixToolset.Sdk">
   <PropertyGroup>
+    <OutputType>Bundle</OutputType>
     <DefineConstants>$(DefineConstants);FullVersion=$(FullVersion)</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WixToolset.UI.wixext"/>
+    <ProjectReference Include="..\TestPackage\TestPackage.wixproj"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Bal.wixext"/>
     <PackageReference Include="TidyBuild"/>
   </ItemGroup>
 </Project>

@@ -37,6 +37,7 @@ namespace MsiZapEx
         public List<string> Dependencies { get; private set; } = new List<string>();
         public List<string> Dependents { get; private set; } = new List<string>();
         public StatusFlags Status { get; private set; } = StatusFlags.None;
+        public Dictionary<string, object> Variables { get; private set; } = new Dictionary<string, object>();
 
         public static List<BundleInfo> FindByUpgradeCode(Guid bundleUpgradeCode)
         {
@@ -204,6 +205,15 @@ namespace MsiZapEx
             {
                 Console.WriteLine($"\tDependent: '{d}'");
             }
+
+            if (Variables.Count == 0)
+            {
+                Console.WriteLine($"\tNo persisted variables detected");
+            }
+            foreach (var v in Variables)
+            {
+                Console.WriteLine($"\tVariable: '{v.Key}'='{v.Value?.ToString()}'");
+            }
         }
 
         public BundleInfo(Guid bundleProductCode, RegistryView? view = null)
@@ -328,6 +338,21 @@ namespace MsiZapEx
                         if (string.IsNullOrEmpty(BundleProviderKey))
                         {
                             ReadDependencies(bpk);
+                        }
+                    }
+
+                    using (var hkVariables = hkUninstall.OpenSubKey("variables"))
+                    {
+                        if (hkVariables != null)
+                        {
+                            var varNames = hkVariables.GetValueNames();
+                            foreach (var varName in varNames)
+                            {
+                                if (!string.IsNullOrEmpty(varName))
+                                {
+                                    Variables[varName] = hkVariables.GetValue(varName);
+                                }
+                            }
                         }
                     }
                 }

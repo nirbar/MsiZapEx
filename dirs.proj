@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.Build.Traversal">
+  <PropertyGroup>
+    <TraversalGlobalProperties>SolutionDir=$(MSBuildThisFileDirectory);Configuration=$(Configuration);BuildProjectReferences=false</TraversalGlobalProperties>
+    <CustomBeforeTraversalProps>$(MSBuildThisFileDirectory)Directory.Build.props</CustomBeforeTraversalProps>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="MsiZapEx\MsiZapEx.csproj" Properties="Platform=Any CPU;GeneratePackageOnBuild=true" Targets="Build" BuildInParallel="false"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(BuildSample)' != '' And $(BuildSample)">
+    <ProjectReference Include="TestPackage\TestPackage.wixproj" Properties="Platform=x64" Targets="Build" BuildInParallel="false"/>
+    <ProjectReference Include="TestBundle\TestBundle.wixproj" Properties="Platform=x64" Targets="Build" BuildInParallel="false"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TidyBuild" />
+  </ItemGroup>
+</Project>

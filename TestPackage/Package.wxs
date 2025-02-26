@@ -1,5 +1,5 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-  <Package Name="TestPackage" Manufacturer="TODO Manufacturer" Version="1.0.0.0" UpgradeCode="270775df-83c8-42fa-b78f-4713cb37d84d">
+  <Package Name="TestPackage" Manufacturer="Panel::Software" Version="$(FullVersion)" UpgradeCode="270775df-83c8-42fa-b78f-4713cb37d84d">
     <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
 
     <UIRef Id="WixUI_FeatureTree_$(sys.BUILDARCHSHORT)"/>
