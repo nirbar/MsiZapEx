@@ -10,7 +10,7 @@ namespace MsiZapEx
     public class BundleInfo
     {
         // HKLM32/HKLM64 Software\Microsoft\Windows\CurrentVersion\Uninstall\<BundleProductCode>
-        // HKCR HKEY_CLASSES_ROOT\Installer\Dependencies\<MsiProductCode or BundleBundleProviderKey>\@ = <MsiProductCode Or BundleProductCode>
+        // HKCR HKEY_CLASSES_ROOT\Installer\Dependencies\<MsiProductCode or BundleProviderKey>\@ = <MsiProductCode Or BundleProductCode>
         // HKCR HKEY_CLASSES_ROOT\Installer\Dependencies\*\Dependents\<BundleProductCode>
         [Flags]
         public enum StatusFlags

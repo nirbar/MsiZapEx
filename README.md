@@ -16,6 +16,9 @@ MsiZapEx is a command line utility and .NET assembly that enumerates Windows Ins
 - --dry-run: May be specified with --delete only. Print all WiX and Windows Installer entries for the provided UUID that would be deleted
 - --obfuscated: For a Windows Installer ProductCode or UpgradeCode or ComponentCode, the UUID is provided in its obfuscated form
 - --verbose: Print each registry modification
+- --obfuscate-guid: Print the obfuscated form of the UUID
+- --key-path: Detect components by key path
+- --shallow: Whether or not to enumerate products' components. Specifying this may significally reduce run time
 
 # Open Issues
 
