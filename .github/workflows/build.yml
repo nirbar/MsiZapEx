@@ -15,7 +15,7 @@ on:
       version:
         description: 'Build & package version'
         required: true
-        default: 0.2.5
+        default: 0.2.6
         type: string
 jobs:
   Build:
@@ -23,6 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: microsoft/setup-msbuild@v2
+
+      - name: Decrypt snk
+        run: gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.GPG_PASSPHRASE }}" --output "${{ github.workspace }}\key.snk" "${{ github.workspace }}\key.snk.gpg"
 
       - name: Set version
         run: Add-Content -Path $env:GITHUB_ENV -Value "FULL_VERSION=${{ github.event.inputs.version }}.${{ github.run_number }}"

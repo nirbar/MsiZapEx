@@ -261,3 +261,4 @@ __pycache__/
 *.pyc
 /build/
 launchSettings.json
+key.snk

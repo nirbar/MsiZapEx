@@ -28,6 +28,11 @@
 	</PackageDescription>
   </PropertyGroup>
 
+  <PropertyGroup Label="StrongName" Condition="Exists('$(MSBuildThisFileDirectory)\..\key.snk')">
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\..\key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="CommandLineParser"/>
     <PackageReference Include="TidyBuild"/>
