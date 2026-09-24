@@ -69,9 +69,8 @@ namespace MsiZapEx
             }
         }
 
-        public static ProductInfo RegisterDummyProduct(Guid upgradeCode, string displayName, Version version)
+        internal static ProductInfo RegisterDummyProduct(Guid productCode, string displayName, Version version)
         {
-            Guid productCode = Guid.NewGuid();
             var obfuscatedGuid = productCode.MsiObfuscate();
             using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {

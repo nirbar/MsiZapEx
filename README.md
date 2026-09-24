@@ -19,6 +19,7 @@ MsiZapEx is a command line utility and .NET assembly that enumerates Windows Ins
 - --obfuscate-guid: Print the obfuscated form of the UUID
 - --key-path: Detect components by key path
 - --shallow: Whether or not to enumerate products' components. Specifying this may significally reduce run time
+- --create-dummy-bundle: Register a dummy bundle. Expects '_upgrade code;display name;version_'
 
 # Open Issues
 

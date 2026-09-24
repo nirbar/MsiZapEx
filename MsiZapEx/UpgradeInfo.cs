@@ -32,6 +32,29 @@ namespace MsiZapEx
         public bool UserScope => !MachineScope;
         public string UserSID => MachineScope ? ProductInfo.LocalSystemSID : ProductInfo.CurrentUserSID;
 
+        public static UpgradeInfo RegisterDummyProduct(Guid upgradeCode, string displayName, Version version)
+        {
+            Guid productCode = Guid.NewGuid();
+            var msiInfo = ProductInfo.RegisterDummyProduct(productCode, displayName, version);
+
+            using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                using (RegistryKey k = hklm.CreateSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\{upgradeCode.MsiObfuscate()}"))
+                {
+                    k.SetValue(msiInfo.ProductCode.MsiObfuscate(), "");
+                }
+            }
+            using (RegistryKey hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
+            {
+                using (RegistryKey k = hkcr.CreateSubKey($@"Installer\UpgradeCodes\{upgradeCode.MsiObfuscate()}"))
+                {
+                    k.SetValue(msiInfo.ProductCode.MsiObfuscate(), "");
+                }
+            }
+
+            return new UpgradeInfo(upgradeCode, true, true);
+        }
+
         internal static bool ResolveScope(Guid productCode)
         {
             string obfuscatedGuid = GuidEx.MsiObfuscate(productCode);

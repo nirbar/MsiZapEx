@@ -13,7 +13,7 @@ namespace MsiZapExTest
             {
                 try
                 {
-                    var upgrade = new UpgradeInfo(new Guid(id));
+                    var upgrade = new UpgradeInfo(new Guid(id), true);
                     foreach (var p in upgrade.RelatedProducts)
                     {
                         try
@@ -34,14 +34,21 @@ namespace MsiZapExTest
             var name = nameof(CreateDummyProduct);
             var version = new Version(1, 2, 3, 4);
 
-            ProductInfo? productInfo = null;
-            Assert.DoesNotThrow(() => { productInfo = ProductInfo.RegisterDummyProduct(upgradeCode, name, version); });
-            Assert.That(productInfo, Is.Not.Null);
-            Assert.That(productInfo.DisplayName, Is.EqualTo(name));
-            Assert.That(productInfo.DisplayVersion, Is.EqualTo(version.ToString()));
+            UpgradeInfo? upgradeInfo = null;
+            Assert.DoesNotThrow(() => { upgradeInfo = UpgradeInfo.RegisterDummyProduct(upgradeCode, name, version); });
+            Assert.That(upgradeInfo, Is.Not.Null);
+            Assert.That(upgradeInfo.RelatedProducts, Is.Not.Null);
+            Assert.That(upgradeInfo.RelatedProducts.Count, Is.EqualTo(1));
 
-            var expectedStatus = ProductInfo.StatusFlags.Good & ~ProductInfo.StatusFlags.Components & ~ProductInfo.StatusFlags.ComponentsGood;
-            Assert.That(productInfo.Status, Is.EqualTo(expectedStatus));
+            var expectedBundleStatus = UpgradeInfo.StatusFlags.Good & ~UpgradeInfo.StatusFlags.ProductsGood;
+            Assert.That(upgradeInfo.Status, Is.EqualTo(expectedBundleStatus));
+
+            var msi = upgradeInfo.RelatedProducts.First();
+            Assert.That(msi.DisplayName, Is.EqualTo(name));
+            Assert.That(msi.DisplayVersion, Is.EqualTo(version.ToString()));
+
+            var expectedMsiStatus = ProductInfo.StatusFlags.Good & ~ProductInfo.StatusFlags.Components & ~ProductInfo.StatusFlags.ComponentsGood;
+            Assert.That(msi.Status, Is.EqualTo(expectedMsiStatus));
         }
     }
 }
