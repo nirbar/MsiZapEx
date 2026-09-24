@@ -6,7 +6,7 @@
 
     <Variable Name="InstallFolder" Value="[ProgramFiles6432Folder]\!(bind.packageName.TestPackage.msi)" Type="formatted" Persisted="yes"/>
 
-    <Chain>
+    <Chain DisableSystemRestore="yes">
       <MsiPackage SourceFile="$(TestPackage.TargetPath)">
         <MsiProperty Name="INSTALLFOLDER" Value="[InstallFolder]"/>
       </MsiPackage>

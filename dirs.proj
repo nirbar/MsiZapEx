@@ -6,8 +6,6 @@
   <ItemGroup>
     <ProjectReference Include="MsiZapEx\MsiZapEx.csproj" Properties="Platform=Any CPU;GeneratePackageOnBuild=true" Targets="Restore;Build" BuildInParallel="false"/>
     <ProjectReference Include="MsiZapExTest\MsiZapExTest.csproj" Properties="Platform=Any CPU" Targets="Restore;Build" BuildInParallel="false"/>
-  </ItemGroup>
-  <ItemGroup Condition="'$(BuildSample)' != '' And $(BuildSample)">
     <ProjectReference Include="TestPackage\TestPackage.wixproj" Properties="Platform=x64" Targets="Restore;Build" BuildInParallel="false"/>
     <ProjectReference Include="TestBundle\TestBundle.wixproj" Properties="Platform=x64" Targets="Restore;Build" BuildInParallel="false"/>
   </ItemGroup>

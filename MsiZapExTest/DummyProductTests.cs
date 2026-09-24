@@ -31,7 +31,7 @@ namespace MsiZapExTest
         public void CreateDummyProduct()
         {
             var upgradeCode = new Guid("{10E79D07-D6E7-4A79-B9CC-1A87D29D41C9}");
-            var name = nameof(CreateDummyProduct);
+            var name = TestContext.CurrentContext.Test.MethodName;
             var version = new Version(1, 2, 3, 4);
 
             UpgradeInfo? upgradeInfo = null;

@@ -49,9 +49,12 @@ namespace MsiZapEx
                 {
                     rk.SetValue("BundleUpgradeCode", new string[] { bundleUpgradeCode.ToString("B") }, RegistryValueKind.MultiString);
                     rk.SetValue("BundleProviderKey", bundleProductCode.ToString("B"));
-                    rk.SetValue("BundleCachePath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Package Cache", bundleProductCode.ToString("B")));
+                    rk.SetValue("BundleCachePath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Package Cache", bundleProductCode.ToString("B"), "oh_no.exe"));
                     rk.SetValue("DisplayName", displayName);
                     rk.SetValue("DisplayVersion", version.ToString());
+                    rk.SetValue("BundleVersion", version.ToString());
+                    rk.SetValue("BundleScope", 1);
+                    rk.SetValue("BundleTag", bundleProductCode.ToString("B"));
                 }
             }
             using (var hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, registryView))
