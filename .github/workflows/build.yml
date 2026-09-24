@@ -15,7 +15,7 @@ on:
       version:
         description: 'Build & package version'
         required: true
-        default: 0.2.6
+        default: 0.3.0
         type: string
 jobs:
   Build:
@@ -34,6 +34,9 @@ jobs:
 
       - name: Build
         run: dotnet build dirs.proj -restore -p:Configuration=Release -p:FullVersion=${{ env.FULL_VERSION }}
+
+      - name: Test
+        run: dotnet test build\MsiZapExTest\Release\bin\MsiZapExTest.dll
 
       - name: Publish artifacts
         uses: actions/upload-artifact@v4.6.1

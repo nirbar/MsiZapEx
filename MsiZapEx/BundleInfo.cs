@@ -21,8 +21,9 @@ namespace MsiZapEx
             ArpPorviderKey = ArpUpgradeCodes * 2,
             HkcrDependencies = ArpPorviderKey * 2,
             ProviderKeyProductCodeMatch = HkcrDependencies * 2,
+            Cached = ProviderKeyProductCodeMatch * 2,
 
-            Good = ProviderKeyProductCodeMatch | HkcrDependencies | ArpPorviderKey | ArpUpgradeCodes | ARP
+            Good = Cached | ProviderKeyProductCodeMatch | HkcrDependencies | ArpPorviderKey | ArpUpgradeCodes | ARP
         }
 
         //TODO Support per-user bundles
@@ -38,6 +39,30 @@ namespace MsiZapEx
         public List<string> Dependents { get; private set; } = new List<string>();
         public StatusFlags Status { get; private set; } = StatusFlags.None;
         public Dictionary<string, object> Variables { get; private set; } = new Dictionary<string, object>();
+
+        public static BundleInfo RegisterDummyBundle(Guid bundleUpgradeCode, string displayName, Version version, RegistryView registryView = RegistryView.Registry32)
+        {
+            Guid bundleProductCode = Guid.NewGuid();
+            using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, registryView))
+            {
+                using (var rk = hklm.CreateSubKey($@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{bundleProductCode.ToString("B")}"))
+                {
+                    rk.SetValue("BundleUpgradeCode", new string[] { bundleUpgradeCode.ToString("B") }, RegistryValueKind.MultiString);
+                    rk.SetValue("BundleProviderKey", bundleProductCode.ToString("B"));
+                    rk.SetValue("BundleCachePath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Package Cache", bundleProductCode.ToString("B")));
+                    rk.SetValue("DisplayName", displayName);
+                    rk.SetValue("DisplayVersion", version.ToString());
+                }
+            }
+            using (var hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, registryView))
+            {
+                using (var rk = hkcr.CreateSubKey($@"Installer\Dependencies\{bundleProductCode.ToString("B")}"))
+                {
+                    rk.SetValue("", bundleProductCode.ToString("B"));
+                }
+            }
+            return new BundleInfo(bundleProductCode, registryView);
+        }
 
         public static List<BundleInfo> FindByUpgradeCode(Guid bundleUpgradeCode)
         {
@@ -159,6 +184,10 @@ namespace MsiZapEx
             {
                 Console.WriteLine($"\tBundleProductCode '{BundleProductCode}'");
                 Console.WriteLine($"\tBitness '{RegistryView}'");
+            }
+            if (!Status.HasFlag(StatusFlags.Cached))
+            {
+                Console.WriteLine($"\tBundle is not cached");
             }
 
             if (!Status.HasFlag(StatusFlags.ArpUpgradeCodes))
@@ -330,6 +359,11 @@ namespace MsiZapEx
                     DisplayName = hkUninstall.GetValue("DisplayName")?.ToString();
                     DisplayVersion = hkUninstall.GetValue("DisplayVersion")?.ToString();
                     BundleCachePath = hkUninstall.GetValue("BundleCachePath")?.ToString();
+
+                    if (!string.IsNullOrEmpty(BundleCachePath) && File.Exists(BundleCachePath))
+                    {
+                        Status |= StatusFlags.Cached;
+                    }
 
                     string bpk = hkUninstall.GetValue("BundleProviderKey")?.ToString();
                     if (!string.IsNullOrEmpty(bpk))

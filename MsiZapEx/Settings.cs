@@ -1,5 +1,4 @@
 using CommandLine;
-using System;
 using System.Collections.Generic;
 
 namespace MsiZapEx
@@ -7,6 +6,9 @@ namespace MsiZapEx
     public class Settings
     {
         internal static Settings Instance { get; set; }
+
+        [Option("create-dummy-bundle", Required = false, Max = 3, Min = 3, Separator = ';', HelpText = "Register a dummy bundle. Expects '<upgrade code>;<display name>;<version>'", Group = "codes")]
+        public IEnumerable<string> CreateDummyBundle { get; set; } = new List<string>();
 
         [Option("obfuscate-guid", Required = false, HelpText = "Print the obfuscated form of the UUID", Group = "codes")]
         public string ObfuscateGuid { get; set; }

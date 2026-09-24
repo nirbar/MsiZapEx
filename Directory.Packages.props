@@ -1,13 +1,18 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <WixToolsetVersion Condition=" '$(WixToolsetVersion)' == '' ">5.0.2</WixToolsetVersion>
+    <WixToolsetVersion Condition=" '$(WixToolsetVersion)' == '' ">7.0.0</WixToolsetVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageVersion Include="WixToolset.UI.wixext" Version="$(WixToolsetVersion)"/>
     <PackageVersion Include="WixToolset.Bal.wixext" Version="$(WixToolsetVersion)"/>
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
+    <PackageVersion Include="NUnit" Version="4.3.2" />
+    <PackageVersion Include="NUnit.Analyzers" Version="4.7.0" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="5.0.0" />
 
     <PackageVersion Include="TidyBuild" Version="1.5.2"/>
   </ItemGroup>

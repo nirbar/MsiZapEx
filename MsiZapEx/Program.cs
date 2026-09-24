@@ -173,12 +173,32 @@ namespace MsiZapEx
                             Console.WriteLine($"Obfuscated UUID (N format): {obfuscated.ToString("N")}");
                             Console.WriteLine($"Obfuscated UUID (B format): {obfuscated.ToString("B")}");
                         }
+                        if (Settings.Instance.CreateDummyBundle.Any())
+                        {
+                            var val = Settings.Instance.CreateDummyBundle.ElementAt(0);
+                            if (!Guid.TryParse(val, out var bundleUpgradeCode))
+                            {
+                                throw new Exception($"Failed to parse upgrade code from '{val}'");
+                            }
+                            var name = Settings.Instance.CreateDummyBundle.ElementAt(1);
+                            if (string.IsNullOrEmpty(name))
+                            {
+                                throw new Exception($"DisplayName not supplied");
+                            }
+                            val = Settings.Instance.CreateDummyBundle.ElementAt(2);
+                            if (!Version.TryParse(val, out var bundleVersion))
+                            {
+                                throw new Exception($"Failed to parse upgrade code from '{val}'");
+                            }
+                            var bundleInfo = BundleInfo.RegisterDummyBundle(bundleUpgradeCode, name, bundleVersion);
+                            bundleInfo.PrintState();
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.Error.WriteLine(ex.Message);
                 Environment.Exit(-1);
             }
         }

@@ -1,5 +1,6 @@
 ﻿<Project Sdk="WixToolset.Sdk">
   <PropertyGroup>
+    <AcceptEula>wix7</AcceptEula>
     <DefineConstants>$(DefineConstants);FullVersion=$(FullVersion)</DefineConstants>
   </PropertyGroup>
 
