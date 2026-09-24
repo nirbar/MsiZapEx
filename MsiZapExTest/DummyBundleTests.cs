@@ -35,7 +35,8 @@ namespace MsiZapExTest
             var version = new Version(1, 2, 3, 4);
             var view = RegistryView.Registry32;
 
-            var bundleInfo = BundleInfo.RegisterDummyBundle(upgradeCode, name, version, view);
+            BundleInfo? bundleInfo = null;
+            Assert.DoesNotThrow(() => { bundleInfo = BundleInfo.RegisterDummyBundle(upgradeCode, name, version, view); });
             Assert.That(bundleInfo, Is.Not.Null);
             Assert.That(bundleInfo.RegistryView, Is.EqualTo(view));
             Assert.That(bundleInfo.BundleUpgradeCodes, Is.Not.Null);
@@ -58,7 +59,8 @@ namespace MsiZapExTest
             var version = new Version(1, 2, 3, 4);
             var view = RegistryView.Registry32;
 
-            var bundleInfo = BundleInfo.RegisterDummyBundle(upgradeCode, name, version, view);
+            BundleInfo? bundleInfo = null;
+            Assert.DoesNotThrow(() => { bundleInfo = BundleInfo.RegisterDummyBundle(upgradeCode, name, version, view); });
             Assert.That(bundleInfo, Is.Not.Null);
             Assert.That(bundleInfo.RegistryView, Is.EqualTo(view));
             Assert.That(bundleInfo.BundleUpgradeCodes, Is.Not.Null);

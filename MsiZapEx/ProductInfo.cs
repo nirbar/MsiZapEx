@@ -69,6 +69,42 @@ namespace MsiZapEx
             }
         }
 
+        public static ProductInfo RegisterDummyProduct(Guid upgradeCode, string displayName, Version version)
+        {
+            Guid productCode = Guid.NewGuid();
+            var obfuscatedGuid = productCode.MsiObfuscate();
+            using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                using (var rk = hklm.CreateSubKey($@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{productCode.ToString("B")}"))
+                {
+                    rk.SetValue("DisplayName", displayName);
+                    rk.SetValue("DisplayVersion", version.ToString());
+                }
+                using (var rk = hklm.CreateSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{LocalSystemSID}\Products\{obfuscatedGuid}\InstallProperties"))
+                {
+                    rk.SetValue("LocalPackage", "");
+                    rk.SetValue("DisplayName", displayName);
+                    rk.SetValue("DisplayVersion", version.ToString());
+                }
+                using (var rk = hklm.CreateSubKey($@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\{LocalSystemSID}\Products\{obfuscatedGuid}\Features"))
+                {
+                    rk.SetValue("Core", "A");
+                }
+            }
+            using (var hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
+            {
+                using (var rk = hkcr.CreateSubKey($@"Installer\Products\{obfuscatedGuid}"))
+                {
+                    rk.SetValue("", productCode.ToString("B"));
+                }
+                using (var rk = hkcr.CreateSubKey($@"Installer\Features\{obfuscatedGuid}"))
+                {
+                    rk.SetValue("Core", "A");
+                }
+            }
+            return new ProductInfo(productCode, false, true);
+        }
+
         public ProductInfo(Guid productCode, bool includeComponents = true, bool? machineScope = null)
         {
             string obfuscatedGuid = GuidEx.MsiObfuscate(productCode);

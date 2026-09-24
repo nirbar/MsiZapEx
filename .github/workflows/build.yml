@@ -15,13 +15,14 @@ on:
       version:
         description: 'Build & package version'
         required: true
-        default: 0.3.0
+        default: 0.4.0
         type: string
 jobs:
   Build:
     runs-on: windows-latest
     permissions:
       id-token: write  # For nuget.org publish
+      contents: write  # To create tags and releases
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: microsoft/setup-msbuild@v2
